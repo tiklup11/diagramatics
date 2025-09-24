@@ -6,7 +6,7 @@ import { f_draw_to_svg, calculate_text_scale } from './draw_svg.js';
 import { rectangle, rectangle_corner } from './shapes.js';
 import { size } from './shapes/shapes_geometry.js';
 import { HorizontalAlignment, VerticalAlignment, distribute_horizontal_and_align, distribute_variable_row, distribute_vertical_and_align } from './alignment.js';
-import { range } from './utils.js';
+import { expand_directional_value, range } from './utils.js';
 
 type BBox = [Vector2, Vector2]
 const FOCUS_RECT_CLASSNAME = "diagramatics-focusrect"
@@ -1130,7 +1130,7 @@ type dnd_container_positioning_type =
     {type:"vertical-uniform"} |
     {type:"horizontal", padding:number} |
     {type:"vertical", padding:number} |
-    {type:"flex-row", padding:number, vertical_alignment?:VerticalAlignment, horizontal_alignment?:HorizontalAlignment} |
+    {type:"flex-row", padding:number|[number,number], gap:number|[number,number], vertical_alignment?:VerticalAlignment, horizontal_alignment?:HorizontalAlignment} |
     {type:"grid", value:[number, number]}
 type dnd_container_config = dnd_container_positioning_type & {
     custom_region_box?: [Vector2, Vector2]
@@ -1226,27 +1226,28 @@ class DragAndDropHandler {
                 return distributed.children.map(d => d.origin);
             }
             case "flex-row" : {
-                const pad = config.padding ?? 0;
-                const container_width = bbox[1].x - bbox[0].x - 2*pad;
+                const pad = expand_directional_value(config.padding ?? 0);
+                const gap = config.gap ? expand_directional_value(config.gap) : pad;
+                const container_width = bbox[1].x - bbox[0].x - pad[1] - pad[3];
                 const sizelist = content.map((name) => this.draggables[name]?.diagram_size ?? [0,0]);
                 const size_rects = sizelist.map(([w,h]) => rectangle(w,h).mut());
                 let distributed = distribute_variable_row(
-                    size_rects, container_width, pad, pad,
+                    size_rects, container_width, gap[0], gap[1],
                     config.vertical_alignment, config.horizontal_alignment
                 ).mut()
                 switch (config.horizontal_alignment){
                     case 'center' :{
                         distributed = distributed
-                            .move_origin('top-center').position(V2(p_center.x, bbox[1].y-pad));
+                            .move_origin('top-center').position(V2(p_center.x, bbox[1].y-pad[0]));
                     } break;
                     case 'right' : {
                         distributed = distributed
-                            .move_origin('top-right').position(V2(bbox[1].x-pad, bbox[1].y-pad));
+                            .move_origin('top-right').position(V2(bbox[1].x-pad[1], bbox[1].y-pad[0]));
                     } break;
                     case 'center':
                     default: {
                         distributed = distributed
-                            .move_origin('top-left').position(V2(bbox[0].x+pad, bbox[1].y-pad));
+                            .move_origin('top-left').position(V2(bbox[0].x+pad[3], bbox[1].y-pad[0]));
                     }
                 }
                 return distributed.children.map(d => d.origin);
