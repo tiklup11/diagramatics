@@ -1,5 +1,5 @@
 import { Diagram, DiagramType, diagram_combine, empty } from './diagram.js';
-import { str_to_mathematical_italic } from './unicode_utils.js'
+import { str_to_mathematical_italic } from './unicode_utils.js';
 import { Vector2, V2 } from './vector.js';
 import { get_color, tab_color } from './color_palette.js';
 import { f_draw_to_svg, calculate_text_scale } from './draw_svg.js';
@@ -24,9 +24,9 @@ const defaultFormat_f : formatFunction = (name : string, val : any, prec? : numb
     return `${str_to_mathematical_italic(name)} = ${val_str}`;
 }
 
-type setter_function_t = (_ : any) => void;
-type inpVariables_t = {[key : string] : any};
-type inpSetter_t    = {[key : string] : setter_function_t };
+export type setter_function_t = (_ : any) => void;
+export type inpVariables_t = {[key : string] : any};
+export type inpSetter_t    = {[key : string] : setter_function_t };
 
 enum control_svg_name {
     locator   = "control_svg",
