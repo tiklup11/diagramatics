@@ -1133,7 +1133,7 @@ class LocatorHandler {
         const circle_inner = document.createElementNS("http://www.w3.org/2000/svg", "circle");
 
         const shadow_radius = radius * 2;
-        const hit_radius = radius * 2.5;
+        const hit_radius = radius * 2;
         const outer_radius = radius;
         const inner_radius = radius * 0.4;
 
