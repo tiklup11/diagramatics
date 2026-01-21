@@ -861,6 +861,12 @@ declare class Interactive {
     dnd_initial_draw(): void;
     private registerEventListener;
     removeRegisteredEventListener(): void;
+    /**
+     * Clear all managed SVG elements and control containers
+     * and remove all registered event listeners.
+     * Useful for cleaning up when a component is unmounted in React.
+     */
+    cleanup(): void;
     get_svg_element(metaname: string, force_recreate?: boolean): SVGSVGElement;
     get_diagram_svg(): SVGSVGElement;
     isTargetingDocument(): boolean;

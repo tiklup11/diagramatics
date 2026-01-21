@@ -169,6 +169,42 @@ export class Interactive {
         this.registeredEventListenerRemoveFunctions.forEach(f => f());
         this.registeredEventListenerRemoveFunctions = [];
     }
+
+    /**
+     * Clear all managed SVG elements and control containers
+     * and remove all registered event listeners.
+     * Useful for cleaning up when a component is unmounted in React.
+     */
+    public cleanup() {
+        this.removeRegisteredEventListener();
+        if (this.diagram_outer_svg) {
+            // we use childNodes instead of children to include things like text nodes if any
+            // but here we specifically want to remove the SVGs we created
+            const metas = [
+                "diagram_svg", 
+                control_svg_name.locator, 
+                control_svg_name.dnd, 
+                control_svg_name.custom, 
+                control_svg_name.button
+            ];
+            const to_remove : Element[] = [];
+            for (let i = 0; i < this.diagram_outer_svg.children.length; i++) {
+                const child = this.diagram_outer_svg.children[i];
+                if (child instanceof SVGSVGElement && metas.includes(child.getAttribute("meta") || "")) {
+                    to_remove.push(child);
+                }
+            }
+            to_remove.forEach(child => child.remove());
+        }
+        if (this.control_container_div) {
+            this.control_container_div.innerHTML = "";
+        }
+        // clear intervals
+        for (let key in this.intervals) {
+            if (this.intervals[key]) clearInterval(this.intervals[key]);
+        }
+        this.intervals = {};
+    }
     
 
     get_svg_element(metaname: string, force_recreate: boolean = false) : SVGSVGElement {
@@ -1046,9 +1082,13 @@ class LocatorHandler {
             g.classList.add("diagramatics-locator-blink");
             this.addBlinkingCircleOuter(g);
         }
+        g.setAttribute("data-name", name);
         
+        const existing_in_dom = this.control_svg.querySelector(`g[data-name="${name}"]`);
         if (this.svg_elements[name]){
             this.svg_elements[name].replaceWith(g);
+        } else if (existing_in_dom) {
+            existing_in_dom.replaceWith(g);
         } else {
             this.control_svg.appendChild(g);
         }
@@ -1087,8 +1127,13 @@ class LocatorHandler {
         g.appendChild(circle_outer);
         g.appendChild(circle_inner);
         g.setAttribute("transform", `translate(${value.x * s},${-value.y * s})`)
+        g.setAttribute("data-name", name);
+
+        const existing_in_dom = this.control_svg.querySelector(`g[data-name="${name}"]`);
         if (this.svg_elements[name]){
             this.svg_elements[name].replaceWith(g);
+        } else if (existing_in_dom) {
+            existing_in_dom.replaceWith(g);
         } else {
             this.control_svg.appendChild(g);
         }
