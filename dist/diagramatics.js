@@ -4828,11 +4828,9 @@ class LocatorHandler {
         g.setAttribute("class", "diagramatics-locator");
         const shadow = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         const hit_area = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        const circle_outer = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         const circle_inner = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         const shadow_radius = radius * 2;
-        const hit_radius = radius * 2;
-        const outer_radius = radius;
+        const hit_radius = radius * 1.3;
         const inner_radius = radius * 0.4;
         shadow.setAttribute("r", shadow_radius.toString());
         shadow.setAttribute("fill", "url(#diagramatics-locator-shadow-gradient)");
@@ -4845,13 +4843,6 @@ class LocatorHandler {
         hit_area.setAttribute("stroke-width", "1");
         hit_area.setAttribute("class", "diagramatics-locator-grab-area");
         hit_area.style.cursor = "grab";
-        circle_outer.setAttribute("r", outer_radius.toString());
-        circle_outer.setAttribute("fill", get_color(color, tab_color));
-        circle_outer.setAttribute("fill-opacity", "0.3137");
-        circle_outer.setAttribute("stroke", "none");
-        circle_outer.classList.add("diagramatics-locator-outer");
-        if (blink)
-            circle_outer.classList.add("diagramatics-locator-blink");
         circle_inner.setAttribute("r", inner_radius.toString());
         circle_inner.setAttribute("fill", get_color(color, tab_color));
         circle_inner.setAttribute("stroke", "none");
@@ -4859,7 +4850,6 @@ class LocatorHandler {
         const s = this.global_scale_factor;
         g.appendChild(shadow);
         g.appendChild(hit_area);
-        g.appendChild(circle_outer);
         g.appendChild(circle_inner);
         g.setAttribute("transform", `translate(${value.x * s},${-value.y * s})`);
         g.setAttribute("data-name", name);

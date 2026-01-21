@@ -118,15 +118,13 @@
   animation: blink-locator 0.5s infinite alternate;
 }
 
-.diagramatics-locator-inner,
-.diagramatics-locator-outer {
+.diagramatics-locator-inner {
   transition: transform 0.2s ease-out;
   transform-origin: center;
   transform-box: fill-box;
 }
 
-.diagramatics-locator:active .diagramatics-locator-inner,
-.diagramatics-locator:active .diagramatics-locator-outer {
+.diagramatics-locator:active .diagramatics-locator-inner {
   transform: scale(1.4);
 }
 
