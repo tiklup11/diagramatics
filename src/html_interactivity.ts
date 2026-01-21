@@ -1132,8 +1132,9 @@ class LocatorHandler {
         const circle_outer = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         const circle_inner = document.createElementNS("http://www.w3.org/2000/svg", "circle");
 
-        const shadow_radius = radius * 6;
-        const hit_radius = radius * 4;
+        const shadow_radius = radius * 2;
+        const hit_radius = radius * 2.5;
+        const outer_radius = radius;
         const inner_radius = radius * 0.4;
 
         shadow.setAttribute("r", shadow_radius.toString());
@@ -1143,12 +1144,13 @@ class LocatorHandler {
 
         hit_area.setAttribute("r", hit_radius.toString());
         hit_area.setAttribute("fill", "white");
-        hit_area.setAttribute("fill-opacity", "0.01"); // almost invisible but clickable
-        hit_area.setAttribute("stroke", "none");
+        hit_area.setAttribute("fill-opacity", "1"); 
+        hit_area.setAttribute("stroke", "rgba(0,0,0,0.05)");
+        hit_area.setAttribute("stroke-width", "1");
         hit_area.setAttribute("class", "diagramatics-locator-grab-area");
         hit_area.style.cursor = "grab";
 
-        circle_outer.setAttribute("r", radius.toString());
+        circle_outer.setAttribute("r", outer_radius.toString());
         circle_outer.setAttribute("fill", get_color(color, tab_color));
         circle_outer.setAttribute("fill-opacity", "0.3137");
         circle_outer.setAttribute("stroke", "none");
