@@ -1,7 +1,7 @@
-import { Diagram, DiagramType, DiagramStyle, TextData, DEFAULT_FONTSIZE } from "./diagram.js";
+import { Diagram, DiagramType, DiagramStyle, TextData, DEFAULT_FONTSIZE, diagram_combine } from "./diagram.js";
 import { tab_color, get_color } from "./color_palette.js";
 import { to_degree, expand_directional_value } from "./utils.js";
-import { str_to_mathematical_italic, str_to_normal_from_mathematical_italic } from './unicode_utils.js'
+import { str_to_mathematical_italic } from './unicode_utils.js';
 import { TAG } from "./tag_names.js";
 
 const is_firefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
@@ -630,6 +630,15 @@ export function draw_to_svg(outer_svgelement : SVGSVGElement, diagram : Diagram,
         clear_svg : clear_svg,
     };
     draw_to_svg_element(outer_svgelement, diagram, options);
+}
+
+/**
+ * Draw a diagram to an svg element
+ * @param svgelement the svg element to draw to
+ * @param diagrams a list of diagrams to draw
+ */
+export function draw(svgelement : SVGSVGElement, ...diagrams : Diagram[]) : void {
+    draw_to_svg(svgelement, diagram_combine(...diagrams));
 }
 
 export interface draw_to_svg_options {
