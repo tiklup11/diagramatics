@@ -4576,6 +4576,26 @@ function set_viewbox(taget, source) {
     taget.setAttribute("viewBox", source.getAttribute("viewBox"));
     taget.setAttribute("preserveAspectRatio", source.getAttribute("preserveAspectRatio"));
 }
+function ensure_radial_gradient(svg) {
+    let defs = svg.querySelector("defs");
+    if (!defs) {
+        defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+        svg.prepend(defs);
+    }
+    if (!defs.querySelector("#diagramatics-locator-shadow-gradient")) {
+        const gradient = document.createElementNS("http://www.w3.org/2000/svg", "radialGradient");
+        gradient.setAttribute("id", "diagramatics-locator-shadow-gradient");
+        const stop0 = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+        stop0.setAttribute("offset", "0%");
+        stop0.setAttribute("stop-color", "rgba(0,0,0,0.2)");
+        const stop1 = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+        stop1.setAttribute("offset", "100%");
+        stop1.setAttribute("stop-color", "rgba(0,0,0,0)");
+        gradient.appendChild(stop0);
+        gradient.appendChild(stop1);
+        defs.appendChild(gradient);
+    }
+}
 function create_slider(callback, min = 0, max = 100, value = 50, step) {
     // create a slider
     let slider = document.createElement("input");
@@ -4801,14 +4821,28 @@ class LocatorHandler {
         return g;
     }
     create_locator_circle_pointer_svg(name, radius, value, color, blink) {
+        ensure_radial_gradient(this.control_svg);
         let g = document.createElementNS("http://www.w3.org/2000/svg", "g");
         // set svg overflow to visible
         g.setAttribute("overflow", "visible");
-        // set cursor to be pointer when hovering
-        g.style.cursor = "pointer";
-        let circle_outer = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        let circle_inner = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        let inner_radius = radius * 0.4;
+        g.setAttribute("class", "diagramatics-locator");
+        const shadow = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        const hit_area = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        const circle_outer = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        const circle_inner = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        const shadow_radius = radius * 6;
+        const hit_radius = radius * 4;
+        const inner_radius = radius * 0.4;
+        shadow.setAttribute("r", shadow_radius.toString());
+        shadow.setAttribute("fill", "url(#diagramatics-locator-shadow-gradient)");
+        shadow.setAttribute("stroke", "none");
+        shadow.setAttribute("class", "diagramatics-locator-shadow");
+        hit_area.setAttribute("r", hit_radius.toString());
+        hit_area.setAttribute("fill", "white");
+        hit_area.setAttribute("fill-opacity", "0.01"); // almost invisible but clickable
+        hit_area.setAttribute("stroke", "none");
+        hit_area.setAttribute("class", "diagramatics-locator-grab-area");
+        hit_area.style.cursor = "grab";
         circle_outer.setAttribute("r", radius.toString());
         circle_outer.setAttribute("fill", get_color(color, tab_color));
         circle_outer.setAttribute("fill-opacity", "0.3137");
@@ -4821,6 +4855,8 @@ class LocatorHandler {
         circle_inner.setAttribute("stroke", "none");
         circle_inner.classList.add("diagramatics-locator-inner");
         const s = this.global_scale_factor;
+        g.appendChild(shadow);
+        g.appendChild(hit_area);
         g.appendChild(circle_outer);
         g.appendChild(circle_inner);
         g.setAttribute("transform", `translate(${value.x * s},${-value.y * s})`);

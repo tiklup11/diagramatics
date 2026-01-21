@@ -1,19 +1,20 @@
-.diagramatics-slider-container{
+.diagramatics-slider-container {
   display: flex;
 }
-.diagramatics-slider-leftcontainer{
+
+.diagramatics-slider-leftcontainer {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
 
-.diagramatics-slider-rightcontainer{
+.diagramatics-slider-rightcontainer {
   /* display: inline-block; */
   padding-left: 10px;
 }
 
 .diagramatics-slider-playbutton {
-  width:  30px;
+  width: 30px;
   height: 30px;
   border-radius: 50%;
   background-color: #1f77b4;
@@ -26,7 +27,8 @@
   /* margin: 4px 2px; */
   cursor: pointer;
 }
-.diagramatics-slider-playbutton>div{
+
+.diagramatics-slider-playbutton>div {
   margin: auto;
   width: 0;
   height: 0;
@@ -36,12 +38,14 @@
   translate: 0.1em 0;
   transition: 100ms all ease;
 }
-.diagramatics-slider-playbutton.paused>div{
+
+.diagramatics-slider-playbutton.paused>div {
   height: 0.6em;
   border-style: double;
   border-width: 0 0 0 0.8em;
   translate: 0 0;
 }
+
 .diagramatics-slider-playbutton:hover {
   background-color: #1f77b450;
 }
@@ -52,16 +56,17 @@
 }
 
 .diagramatics-slider {
-  -webkit-appearance: none;  /* Override default CSS styles */
+  -webkit-appearance: none;
+  /* Override default CSS styles */
   appearance: none;
-  /* width: 100%; /* Full-width */ 
+  /* width: 100%; /* Full-width */
 
   /* creating a custom design */
   width: 200px;
   cursor: pointer;
   outline: none;
   border-radius: 15px;
-  
+
   /* New additions */
   height: 5px;
   margin-bottom: 12.5px;
@@ -73,20 +78,21 @@
 
 /* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
 .diagramatics-slider::-webkit-slider-thumb {
-    /* removing default appearance */
-    -webkit-appearance: none;
-    appearance: none; 
-    cursor: pointer;
+  /* removing default appearance */
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
 
-    width:5px;
-    height:5px;
-    border-radius:50%;
-    background-color:#1f77b4;
-    /* clip-path:circle(50% at 50% 50%); */
-    background-clip:padding-box;
-    padding:5px;
-    border:10px solid #1f77b450;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: #1f77b4;
+  /* clip-path:circle(50% at 50% 50%); */
+  background-clip: padding-box;
+  padding: 5px;
+  border: 10px solid #1f77b450;
 }
+
 /* Thumb: Firefox */
 .diagramatics-slider::-moz-range-thumb {
   height: 15px;
@@ -99,46 +105,79 @@
 
 /*--------------------------- Locator ---------------*/
 @keyframes blink-locator {
-  from {fill-opacity: 0.8;}
-  to {fill-opacity: 0.3137;}
+  from {
+    fill-opacity: 0.8;
+  }
+
+  to {
+    fill-opacity: 0.3137;
+  }
 }
-.diagramatics-locator-blink{
+
+.diagramatics-locator-blink {
   animation: blink-locator 0.5s infinite alternate;
 }
 
-/*---------------------- Drag and Drop --------------*/
-.diagramatics-dnd-draggable:hover{
-    cursor: pointer;
-    opacity: 0.5;
+.diagramatics-locator-inner {
+  transition: transform 0.2s ease-out;
+  transform-origin: center;
 }
-.diagramatics-dnd-container:hover{
-    opacity: 0.5;
+
+.diagramatics-locator:active .diagramatics-locator-inner {
+  transform: scale(1.6);
+}
+
+.diagramatics-locator:active {
+  cursor: grabbing;
+}
+
+.diagramatics-locator-grab-area {
+  cursor: grab;
+}
+
+.diagramatics-locator:active .diagramatics-locator-grab-area {
+  cursor: grabbing;
+}
+
+/*---------------------- Drag and Drop --------------*/
+.diagramatics-dnd-draggable:hover {
+  cursor: pointer;
+  opacity: 0.5;
+}
+
+.diagramatics-dnd-container:hover {
+  opacity: 0.5;
 }
 
 .diagramatics-dnd-draggable:focus {
-    outline: none;
-}
-.diagramatics-dnd-container:focus{
-    outline: none;
+  outline: none;
 }
 
-.diagramatics-dnd-container.hovered{
-    opacity: 0.5;
+.diagramatics-dnd-container:focus {
+  outline: none;
 }
-.diagramatics-dnd-draggable.hovered{
-    opacity: 0.5;
+
+.diagramatics-dnd-container.hovered {
+  opacity: 0.5;
 }
-.diagramatics-dnd-draggable.picked > :not(.diagramatics-focusrect){
-    opacity: 0.5 !important;
+
+.diagramatics-dnd-draggable.hovered {
+  opacity: 0.5;
+}
+
+.diagramatics-dnd-draggable.picked> :not(.diagramatics-focusrect) {
+  opacity: 0.5 !important;
 }
 
 /*---------------------- a11y --------------*/
 .diagramatics-focusable-no-outline {
-    outline: none;
+  outline: none;
 }
+
 .diagramatics-focusrect {
-    visibility: hidden;
+  visibility: hidden;
 }
-:focus > .diagramatics-focusrect {
-    visibility: visible;
+
+:focus>.diagramatics-focusrect {
+  visibility: visible;
 }
