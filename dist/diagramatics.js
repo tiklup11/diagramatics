@@ -7178,9 +7178,9 @@ let default_axes_options = {
     xticks: undefined,
     yticks: undefined,
     n_sample: 100,
-    ticksize: 0.1,
+    ticksize: 0.07,
     headsize: 0.05,
-    tick_label_offset: 0,
+    tick_label_offset: 0.05,
 };
 function axes_transform(axes_options) {
     let opt = Object.assign(Object.assign({}, default_axes_options), axes_options); // use default if not defined
@@ -7220,9 +7220,9 @@ function axes_empty(axes_options) {
     // get the intersection point
     let xorigin = lowerleft.x + (upperright.x - lowerleft.x) / (opt.xrange[1] - opt.xrange[0]) * (0 - opt.xrange[0]);
     let yorigin = lowerleft.y + (upperright.y - lowerleft.y) / (opt.yrange[1] - opt.yrange[0]) * (0 - opt.yrange[0]);
-    let xaxis = arrow2(V2(lowerleft.x, yorigin), V2(upperright.x, yorigin), opt.headsize).append_tags(TAG.GRAPH_AXIS);
-    let yaxis = arrow2(V2(xorigin, lowerleft.y), V2(xorigin, upperright.y), opt.headsize).append_tags(TAG.GRAPH_AXIS);
-    return diagram_combine(xaxis, yaxis).stroke('gray').fill('gray');
+    let xaxis = arrow1(V2(lowerleft.x, yorigin), V2(upperright.x, yorigin), opt.headsize).append_tags(TAG.GRAPH_AXIS);
+    let yaxis = arrow1(V2(xorigin, lowerleft.y), V2(xorigin, upperright.y), opt.headsize).append_tags(TAG.GRAPH_AXIS);
+    return diagram_combine(xaxis, yaxis).stroke('black').strokewidth(2).fill('black');
     // return xaxis;
 }
 /**
@@ -7245,7 +7245,7 @@ function axes_corner_empty(axes_options) {
     // get the intersection point
     let xaxis = arrow1(lowerleft, V2(upperright.x, lowerleft.y), opt.headsize).append_tags(TAG.GRAPH_AXIS);
     let yaxis = arrow1(lowerleft, V2(lowerleft.x, upperright.y), opt.headsize).append_tags(TAG.GRAPH_AXIS);
-    return diagram_combine(xaxis, yaxis).stroke('gray').fill('gray');
+    return diagram_combine(xaxis, yaxis).stroke('black').strokewidth(2).fill('black');
     // return xaxis;
 }
 /**
@@ -7281,7 +7281,7 @@ function axes_corner_empty_xbreak(axes_options) {
     let xaxis_right = arrow1(xbreak_pright_, V2(upperright.x, lowerleft.y), opt.headsize);
     let xaxis = diagram_combine(xaxis_left, xbreak_curve, xaxis_right).append_tags(TAG.GRAPH_AXIS);
     let yaxis = arrow1(lowerleft, V2(lowerleft.x, upperright.y), opt.headsize).append_tags(TAG.GRAPH_AXIS);
-    return diagram_combine(xaxis, yaxis).stroke('gray').fill('gray');
+    return diagram_combine(xaxis, yaxis).stroke('black').strokewidth(2).fill('black');
 }
 /**
  * Create a single tick mark in the x axis
@@ -7294,13 +7294,13 @@ function xtickmark_empty(x, y, axes_options) {
     let height = opt.ticksize;
     let pos = axes_transform(opt)(V2(x, y));
     return line$1(V2(pos.x, pos.y + height / 2), V2(pos.x, pos.y - height / 2))
-        .stroke('gray').append_tags(TAG.GRAPH_TICK);
+        .stroke('black').strokewidth(2).append_tags(TAG.GRAPH_TICK);
 }
 function xtickmark(x, y, str, axes_options) {
     let tick = xtickmark_empty(x, y, axes_options);
     let label = textvar(str).move_origin_text("top-center").translate(tick.get_anchor("bottom-center"))
         .translate(V2(0, -((axes_options === null || axes_options === void 0 ? void 0 : axes_options.tick_label_offset) || 0)))
-        .textfill('gray').append_tags(TAG.GRAPH_TICK_LABEL);
+        .textfill('black').append_tags(TAG.GRAPH_TICK_LABEL);
     return diagram_combine(tick, label);
 }
 /**
@@ -7314,13 +7314,13 @@ function ytickmark_empty(y, x, axes_options) {
     let height = opt.ticksize;
     let pos = axes_transform(opt)(V2(x, y));
     return line$1(V2(pos.x + height / 2, pos.y), V2(pos.x - height / 2, pos.y))
-        .stroke('gray').append_tags(TAG.GRAPH_TICK);
+        .stroke('black').strokewidth(2).append_tags(TAG.GRAPH_TICK);
 }
 function ytickmark(y, x, str, axes_options) {
     let tick = ytickmark_empty(y, x, axes_options);
     let label = textvar(str).move_origin_text("center-right").translate(tick.get_anchor("center-left"))
         .translate(V2(-((axes_options === null || axes_options === void 0 ? void 0 : axes_options.tick_label_offset) || 0), 0))
-        .textfill('gray').append_tags(TAG.GRAPH_TICK_LABEL);
+        .textfill('black').append_tags(TAG.GRAPH_TICK_LABEL);
     return diagram_combine(tick, label);
 }
 // ======= BEGIN utility to calculate ticks
