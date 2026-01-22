@@ -1133,7 +1133,6 @@ class LocatorHandler {
 
         const shadow_radius = radius * 2;
         const hit_radius = radius * 1.3;
-        const outer_radius = radius;
         const inner_radius = radius * 0.4;
 
         shadow.setAttribute("r", shadow_radius.toString());
