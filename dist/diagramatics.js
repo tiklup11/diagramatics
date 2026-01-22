@@ -4840,7 +4840,7 @@ class LocatorHandler {
         hit_area.setAttribute("fill", "white");
         hit_area.setAttribute("fill-opacity", "1");
         hit_area.setAttribute("stroke", "rgba(0,0,0,0.05)");
-        hit_area.setAttribute("stroke-width", "1");
+        hit_area.setAttribute("stroke-width", (radius * 0.1).toString());
         hit_area.setAttribute("class", "diagramatics-locator-grab-area");
         hit_area.style.cursor = "grab";
         circle_inner.setAttribute("r", inner_radius.toString());
