@@ -3,3 +3,4 @@ node_modules
 docs
 src/test/quicktest.ts
 .zed
+.DS_Store
