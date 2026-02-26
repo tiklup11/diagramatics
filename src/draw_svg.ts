@@ -879,14 +879,13 @@ export function download_svg_as_svg(outer_svgelement: SVGSVGElement): void {
         }
     }
 
-    // Set explicit pixel dimensions from the outer element so that
-    // stroke-width, stroke-dasharray, and other absolute units render
-    // at the same visual scale as in the browser.
-    const outerW = outer_svgelement.width.baseVal.value;
-    const outerH = outer_svgelement.height.baseVal.value;
-    if (outerW > 0 && outerH > 0) {
-        svgelement.setAttribute("width", outerW.toString());
-        svgelement.setAttribute("height", outerH.toString());
+    // Set width/height to match the viewBox for a tight bounding-box fit.
+    // This ensures stroke-width, stroke-dasharray, and other absolute units
+    // render at the correct visual scale in standalone SVG viewers.
+    const vb = svgelement.viewBox.baseVal;
+    if (vb.width > 0 && vb.height > 0) {
+        svgelement.setAttribute("width", vb.width.toString());
+        svgelement.setAttribute("height", vb.height.toString());
     }
 
     // Ensure the xmlns attribute is set for standalone SVG files
