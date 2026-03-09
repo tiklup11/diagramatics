@@ -80,5 +80,5 @@ export * as curves from './shapes/shapes_curves.js'
 export * as encoding from './encoding.js'
 
 // Widgets
-export { mcq_interactive } from './shapes/shapes_mcq.js'
-export type { McqChoice, McqSignal } from './shapes/shapes_mcq.js'
+export { mcq_interactive, mcq_setup, MCQ_FONT } from './shapes/shapes_mcq.js'
+export type { McqChoice, McqHandle, McqSlideState, McqSetupOpts } from './shapes/shapes_mcq.js'
