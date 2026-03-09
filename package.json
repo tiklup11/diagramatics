@@ -4,6 +4,7 @@
   "type": "module",
   "description": "Interactive Diagram Maker",
   "main": "dist/diagramatics.js",
+  "react-native": "dist/diagramatics.cjs",
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w",
@@ -28,10 +29,12 @@
     "mocha": "^10.2.0",
     "rollup": "^4.18.0",
     "rollup-plugin-dts": "^6.1.1",
+    "rollup-plugin-string": "^3.0.0",
     "tslib": "^2.6.2",
     "typescript": "^5.4.5"
   },
   "dependencies": {
+    "@phosphor-icons/core": "^2.1.1",
     "@velipso/polybool": "^1.0.0"
   }
 }

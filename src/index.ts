@@ -78,3 +78,7 @@ export * as curves from './shapes/shapes_curves.js'
 
 // Mics
 export * as encoding from './encoding.js'
+
+// Widgets
+export { mcq_interactive } from './shapes/shapes_mcq.js'
+export type { McqChoice, McqSignal } from './shapes/shapes_mcq.js'

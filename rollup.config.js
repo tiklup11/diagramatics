@@ -2,6 +2,7 @@ import typescript from "@rollup/plugin-typescript";
 import terser from "@rollup/plugin-terser";
 import dts from "rollup-plugin-dts";
 import { nodeResolve } from "@rollup/plugin-node-resolve";
+import { string } from "rollup-plugin-string";
 
 const js_config = {
   input: "src/index.ts",
@@ -17,8 +18,14 @@ const js_config = {
       sourcemap: true,
       plugins: [terser()],
     },
+    {
+      file: `dist/diagramatics.cjs`,
+      format: "cjs",
+      sourcemap: true,
+      exports: "named",
+    },
   ],
-  plugins: [nodeResolve(), typescript()],
+  plugins: [nodeResolve(), typescript(), string({ include: "**/*.svg" })],
 };
 
 const dts_config = {
