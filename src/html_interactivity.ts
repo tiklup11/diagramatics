@@ -1078,38 +1078,60 @@ class LocatorHandler {
 
     create_locator_circle_pointer_svg(name: string, radius : number, value : Vector2, color : string, blink : boolean) : SVGGElement {
         let g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-        // set svg overflow to visible
         g.setAttribute("overflow", "visible");
-        // set cursor to be pointer when hovering
         g.style.cursor = "pointer";
 
-        let circle_outer = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        let circle_inner = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-
-        let inner_radius    = radius * 0.4;
-
-        circle_outer.setAttribute("r", radius.toString());
-        circle_outer.setAttribute("fill", get_color(color, tab_color));
-        circle_outer.setAttribute("fill-opacity", "0.3137");
-        circle_outer.setAttribute("stroke", "none");
-        circle_outer.classList.add("diagramatics-locator-outer");
-        if (blink) circle_outer.classList.add("diagramatics-locator-blink");
-
-        circle_inner.setAttribute("r", inner_radius.toString());
-        circle_inner.setAttribute("fill", get_color(color, tab_color));
-        circle_inner.setAttribute("stroke", "none");
-        circle_inner.classList.add("diagramatics-locator-inner");
-
         const s = this.global_scale_factor;
-        g.appendChild(circle_outer);
-        g.appendChild(circle_inner);
+        const thumbR  = radius * 0.92;
+        const strokeW = 4 / s;
+
+        // Visual group — CSS scale transition for press animation
+        let visualGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        visualGroup.style.transition = 'transform 150ms, filter 150ms';
+        visualGroup.style.transformBox = 'fill-box';
+        visualGroup.style.transformOrigin = 'center';
+        visualGroup.style.filter = 'drop-shadow(0px 2px 6px rgba(0,0,0,0.2))';
+
+        let thumb = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        thumb.setAttribute("r", thumbR.toString());
+        thumb.setAttribute("fill", "#111827");
+        thumb.setAttribute("stroke", "white");
+        thumb.setAttribute("stroke-width", strokeW.toString());
+        visualGroup.appendChild(thumb);
+        g.appendChild(visualGroup);
+
+        // Transparent hit area — same size as thumb
+        let hitArea = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        hitArea.setAttribute("r", thumbR.toString());
+        hitArea.setAttribute("fill", "transparent");
+        hitArea.setAttribute("stroke", "none");
+        g.appendChild(hitArea);
+
+        // Press animation
+        const pressStart = () => {
+            visualGroup.style.transform = 'scale(1.33)';
+            visualGroup.style.filter = 'drop-shadow(0px 4px 12px rgba(0,0,0,0.3))';
+        };
+        const pressEnd = () => {
+            visualGroup.style.transform = '';
+            visualGroup.style.filter = 'drop-shadow(0px 2px 6px rgba(0,0,0,0.2))';
+        };
+        g.addEventListener('mousedown', () => {
+            pressStart();
+            document.addEventListener('mouseup', pressEnd, { once: true });
+        });
+        g.addEventListener('touchstart', () => {
+            pressStart();
+            document.addEventListener('touchend', pressEnd, { once: true, passive: true } as any);
+        }, { passive: true });
+
         g.setAttribute("transform", `translate(${value.x * s},${-value.y * s})`)
         if (this.svg_elements[name]){
             this.svg_elements[name].replaceWith(g);
         } else {
             this.control_svg.appendChild(g);
         }
-        
+
         this.svg_elements[name] = g;
         return g;
     }
