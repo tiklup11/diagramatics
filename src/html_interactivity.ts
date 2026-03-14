@@ -1,7 +1,6 @@
 import { Diagram, DiagramType, diagram_combine, empty } from './diagram.js';
-import { str_to_mathematical_italic } from './unicode_utils.js'
+import { str_to_mathematical_italic } from './unicode_utils.js';
 import { Vector2, V2 } from './vector.js';
-import { get_color, tab_color } from './color_palette.js';
 import { f_draw_to_svg, calculate_text_scale } from './draw_svg.js';
 import { rectangle, rectangle_corner } from './shapes.js';
 import { size } from './shapes/shapes_geometry.js';
@@ -12,61 +11,61 @@ type BBox = [Vector2, Vector2]
 const FOCUS_RECT_CLASSNAME = "diagramatics-focusrect"
 const FOCUS_NO_OUTLINE_CLASSNAME = "diagramatics-focusable-no-outline"
 
-function format_number(val : number, prec : number) {
+function format_number(val: number, prec: number) {
     let fixed = val.toFixed(prec);
     // remove trailing zeros
     // and if the last character is a dot, remove it
     return fixed.replace(/\.?0+$/, "");
 }
-export type formatFunction = (name : string, value : any, prec? : number) => string;
-const defaultFormat_f : formatFunction = (name : string, val : any, prec? : number) => {
-    let val_str = (typeof val == 'number' && prec != undefined) ? format_number(val,prec) : val.toString();
+export type formatFunction = (name: string, value: any, prec?: number) => string;
+const defaultFormat_f: formatFunction = (name: string, val: any, prec?: number) => {
+    let val_str = (typeof val == 'number' && prec != undefined) ? format_number(val, prec) : val.toString();
     return `${str_to_mathematical_italic(name)} = ${val_str}`;
 }
 
-type setter_function_t = (_ : any) => void;
-type inpVariables_t = {[key : string] : any};
-type inpSetter_t    = {[key : string] : setter_function_t };
+type setter_function_t = (_: any) => void;
+type inpVariables_t = { [key: string]: any };
+type inpSetter_t = { [key: string]: setter_function_t };
 
 enum control_svg_name {
-    locator   = "control_svg",
-    dnd       = "dnd_svg",
-    custom    = "custom_int_svg",
-    button    = "button_svg"
+    locator = "control_svg",
+    dnd = "dnd_svg",
+    custom = "custom_int_svg",
+    button = "button_svg"
 }
 enum HTML_INT_TARGET {
     DOCUMENT = "document",
     SVG = "svg"
-} 
+}
 
 /**
  * Object that controls the interactivity of the diagram
  */
 export class Interactive {
-    public inp_variables : inpVariables_t = {};
-    public inp_setter    : inpSetter_t = {};
-    public display_mode  : "svg" | "canvas" = "svg";
+    public inp_variables: inpVariables_t = {};
+    public inp_setter: inpSetter_t = {};
+    public display_mode: "svg" | "canvas" = "svg";
 
-    public diagram_svg : SVGSVGElement | undefined = undefined;
-    public locator_svg : SVGSVGElement | undefined = undefined;
-    public dnd_svg : SVGSVGElement | undefined = undefined;
-    public custom_svg : SVGSVGElement | undefined = undefined;
-    public button_svg : SVGSVGElement | undefined = undefined;
+    public diagram_svg: SVGSVGElement | undefined = undefined;
+    public locator_svg: SVGSVGElement | undefined = undefined;
+    public dnd_svg: SVGSVGElement | undefined = undefined;
+    public custom_svg: SVGSVGElement | undefined = undefined;
+    public button_svg: SVGSVGElement | undefined = undefined;
 
-    private locatorHandler? : LocatorHandler = undefined;
-    private dragAndDropHandler? : DragAndDropHandler = undefined;
-    private buttonHandler? : ButtonHandler = undefined;
+    private locatorHandler?: LocatorHandler = undefined;
+    private dragAndDropHandler?: DragAndDropHandler = undefined;
+    private buttonHandler?: ButtonHandler = undefined;
     // no support for canvas yet
-    
-    private focus_padding : number = 1;
+
+    private focus_padding: number = 1;
     private global_scale_factor = 1;
 
-    public draw_function : (inp_object : inpVariables_t, setter_object? : inpSetter_t) => any 
-        = (_) => {};
-    public display_precision : undefined | number = 5;
-    intervals : {[key : string] : any} = {};         
-    
-    public registeredEventListenerRemoveFunctions : (() => void)[] = [];
+    public draw_function: (inp_object: inpVariables_t, setter_object?: inpSetter_t) => any
+        = (_) => { };
+    public display_precision: undefined | number = 5;
+    intervals: { [key: string]: any } = {};
+
+    public registeredEventListenerRemoveFunctions: (() => void)[] = [];
     public single_int_mode: boolean = false;
 
     /**
@@ -77,15 +76,15 @@ export class Interactive {
      * \* _only needed if you want to use custom input object_
      */
     constructor(
-        public control_container_div : HTMLElement, 
-        public diagram_outer_svg? : SVGSVGElement,
-        inp_object_? : {[key : string] : any},
+        public control_container_div: HTMLElement,
+        public diagram_outer_svg?: SVGSVGElement,
+        inp_object_?: { [key: string]: any },
         public event_target: HTML_INT_TARGET = HTML_INT_TARGET.SVG,
-    ){
-        if (inp_object_ != undefined){ this.inp_variables = inp_object_; }
+    ) {
+        if (inp_object_ != undefined) { this.inp_variables = inp_object_; }
     }
 
-    public draw() : void {
+    public draw(): void {
         this.draw_function(this.inp_variables, this.inp_setter);
         this.locatorHandler?.setViewBox();
         this.dragAndDropHandler?.setViewBox();
@@ -94,14 +93,14 @@ export class Interactive {
         // TODO: also do this for the other control_svg
     }
 
-    public set(variable_name : string, val : any) : void {
+    public set(variable_name: string, val: any): void {
         this.inp_setter[variable_name](val);
     }
-    public get(variable_name : string) : any {
+    public get(variable_name: string): any {
         return this.inp_variables[variable_name];
     }
 
-    public label(variable_name : string, value : any, display_format_func : formatFunction = defaultFormat_f){
+    public label(variable_name: string, value: any, display_format_func: formatFunction = defaultFormat_f) {
 
         let labeldiv = document.createElement('div');
         labeldiv.classList.add("diagramatics-label");
@@ -110,7 +109,7 @@ export class Interactive {
         this.inp_variables[variable_name] = value;
 
         // setter ==========================
-        const setter = (val : any) => {
+        const setter = (val: any) => {
             this.inp_variables[variable_name] = val;
             labeldiv.innerHTML = display_format_func(variable_name, val, this.display_precision);
         }
@@ -122,7 +121,7 @@ export class Interactive {
         // <div class="diagramatics-label-container">
         //     <div class="diagramatics-label"></div>
         // </div>
-        
+
         let container = document.createElement('div');
         container.classList.add("diagramatics-label-container");
         container.appendChild(labeldiv);
@@ -135,10 +134,10 @@ export class Interactive {
      * WARNING: deprecated
      * use `locator_initial_draw` instead
      */
-    public locator_draw(){
+    public locator_draw() {
         this.locatorHandler?.setViewBox();
     }
-    public locator_initial_draw(){
+    public locator_initial_draw() {
         // TODO: generate the svg here
         this.locatorHandler?.setViewBox();
     }
@@ -146,37 +145,37 @@ export class Interactive {
     /** 
      * alias for `dnd_initial_draw`
      */
-    public drag_and_drop_initial_draw(){
+    public drag_and_drop_initial_draw() {
         this.dnd_initial_draw();
     }
     public dnd_initial_draw() {
         this.dragAndDropHandler?.setViewBox();
         this.dragAndDropHandler?.drawSvg();
     }
-    
+
     private registerEventListener(
-        element: EventTarget, 
-        type: keyof GlobalEventHandlersEventMap, 
+        element: EventTarget,
+        type: keyof GlobalEventHandlersEventMap,
         callback: EventListenerOrEventListenerObject | null,
-        options? : boolean | AddEventListenerOptions,
+        options?: boolean | AddEventListenerOptions,
     ) {
         element.addEventListener(type, callback, options);
         const removeFunction = () => element.removeEventListener(type, callback);
         this.registeredEventListenerRemoveFunctions.push(removeFunction);
     }
-    
+
     public removeRegisteredEventListener() {
         this.registeredEventListenerRemoveFunctions.forEach(f => f());
         this.registeredEventListenerRemoveFunctions = [];
     }
-    
 
-    get_svg_element(metaname: string, force_recreate: boolean = false) : SVGSVGElement {
+
+    get_svg_element(metaname: string, force_recreate: boolean = false): SVGSVGElement {
         if (this.diagram_outer_svg == undefined) throw Error("diagram_outer_svg in Interactive class is undefined");
-        let diagram_svg : SVGSVGElement | undefined = undefined;
+        let diagram_svg: SVGSVGElement | undefined = undefined;
         // check if this.diagram_outer_svg has a child with meta=control_svg
         // if not, create one
-        let svg_element : SVGSVGElement | undefined = undefined;
+        let svg_element: SVGSVGElement | undefined = undefined;
 
         for (let i in this.diagram_outer_svg.children) {
             let child = this.diagram_outer_svg.children[i];
@@ -201,22 +200,22 @@ export class Interactive {
         return svg_element;
     }
 
-    get_diagram_svg() : SVGSVGElement {
+    get_diagram_svg(): SVGSVGElement {
         let diagram_svg = this.get_svg_element("diagram_svg");
         this.diagram_svg = diagram_svg;
         return diagram_svg;
     }
-    
-    isTargetingDocument() : boolean {
+
+    isTargetingDocument(): boolean {
         return this.event_target == HTML_INT_TARGET.DOCUMENT;
     }
-    
-    set_focus_padding(padding : number) {
+
+    set_focus_padding(padding: number) {
         this.focus_padding = padding;
         if (this.dragAndDropHandler) {
             this.dragAndDropHandler.focus_padding = padding;
         }
-        if (this.buttonHandler){
+        if (this.buttonHandler) {
             this.buttonHandler.focus_padding = padding;
         }
     }
@@ -231,31 +230,31 @@ export class Interactive {
      * @param track_diagram if provided, the locator will snap to the closest point on the diagram
      */
     public locator(
-        variable_name : string, value : Vector2, radius : number, color : string = 'blue', 
-        track_diagram? : Diagram, blink : boolean = true,
+        variable_name: string, value: Vector2, radius: number, color: string = 'blue',
+        track_diagram?: Diagram, blink: boolean = true,
         callback?: (locator_name: string, position: Vector2) => any,
-    ){
+    ) {
         if (this.diagram_outer_svg == undefined) throw Error("diagram_outer_svg in Interactive class is undefined");
         this.inp_variables[variable_name] = value;
 
-        let diagram_svg  = this.get_diagram_svg();
-        let control_svg  = this.get_svg_element(control_svg_name.locator, !this.locator_svg);
+        let diagram_svg = this.get_diagram_svg();
+        let control_svg = this.get_svg_element(control_svg_name.locator, !this.locator_svg);
         this.locator_svg = control_svg;
         // if this is the fist time this function is called, create a locatorHandler
         if (this.locatorHandler == undefined) {
             let locatorHandler = new LocatorHandler(control_svg, diagram_svg, this.global_scale_factor);
             this.locatorHandler = locatorHandler;
             const eventTarget = this.isTargetingDocument() ? document : this.diagram_outer_svg;
-            this.registerEventListener(eventTarget, 'mousemove',  (evt:any) => { locatorHandler.drag(evt)});
-            this.registerEventListener(eventTarget, 'mouseup',    (evt:any) => { locatorHandler.endDrag(evt)});
-            this.registerEventListener(eventTarget, 'touchmove',  (evt:any) => { locatorHandler.drag(evt)});
-            this.registerEventListener(eventTarget, 'touchend',   (evt:any) => { locatorHandler.endDrag(evt)});
-            this.registerEventListener(eventTarget, 'touchcancel',(evt:any) => { locatorHandler.endDrag(evt)});
+            this.registerEventListener(eventTarget, 'mousemove', (evt: any) => { locatorHandler.drag(evt) });
+            this.registerEventListener(eventTarget, 'mouseup', (evt: any) => { locatorHandler.endDrag(evt) });
+            this.registerEventListener(eventTarget, 'touchmove', (evt: any) => { locatorHandler.drag(evt) });
+            this.registerEventListener(eventTarget, 'touchend', (evt: any) => { locatorHandler.endDrag(evt) });
+            this.registerEventListener(eventTarget, 'touchcancel', (evt: any) => { locatorHandler.endDrag(evt) });
         }
 
 
         // ============== callback
-        const f_callback = (pos : Vector2, redraw : boolean = true) => {
+        const f_callback = (pos: Vector2, redraw: boolean = true) => {
             this.inp_variables[variable_name] = pos;
             if (callback && redraw) callback(variable_name, pos);
             if (redraw) this.draw();
@@ -265,16 +264,16 @@ export class Interactive {
         // ============== Circle element
 
         let locator_svg = this.locatorHandler.create_locator_circle_pointer_svg(variable_name, radius, value, color, blink);
-        if(blink){
+        if (blink) {
             // store the circle_outer into the LocatorHandler so that we can turn it off later
             let blinking_outers = locator_svg.getElementsByClassName("diagramatics-locator-blink");
             for (let i = 0; i < blinking_outers.length; i++)
                 (this.locatorHandler as LocatorHandler).addBlinkingCircleOuter(blinking_outers[i])
         }
-        this.registerEventListener(locator_svg, 'mousedown', (evt:any) => {
+        this.registerEventListener(locator_svg, 'mousedown', (evt: any) => {
             this.locatorHandler!.startDrag(evt, variable_name, locator_svg);
         });
-        this.registerEventListener(locator_svg, 'touchstart', (evt:any) => {
+        this.registerEventListener(locator_svg, 'touchstart', (evt: any) => {
             this.locatorHandler!.startDrag(evt, variable_name, locator_svg);
         });
 
@@ -285,15 +284,15 @@ export class Interactive {
                 throw Error('Track diagram must be a polygon or curve');
             if (track_diagram.path == undefined) throw Error(`diagram {diagtam.type} must have a path`);
             let track = track_diagram.path.points;
-            setter = (pos : Vector2) => {
+            setter = (pos: Vector2) => {
                 const s = this.global_scale_factor;
                 let coord = closest_point_from_points(pos, track);
                 locator_svg.setAttribute("transform", `translate(${coord.x * s},${-coord.y * s})`)
                 return coord;
             }
         }
-        else{
-            setter = (pos : Vector2) => {
+        else {
+            setter = (pos: Vector2) => {
                 const s = this.global_scale_factor;
                 locator_svg.setAttribute("transform", `translate(${pos.x * s},${-pos.y * s})`)
                 return pos;
@@ -321,32 +320,32 @@ export class Interactive {
      * @param callback_rightclick callback function that will be called when the locator is right clicked
      */
     public locator_custom(
-        variable_name : string, value : Vector2, diagram : Diagram, 
-        track_diagram? : Diagram, blink : boolean = true,
+        variable_name: string, value: Vector2, diagram: Diagram,
+        track_diagram?: Diagram, blink: boolean = true,
         callback?: (locator_name: string, position: Vector2) => any,
         callback_rightclick?: (locator_name: string) => any
-    ){
+    ) {
         if (this.diagram_outer_svg == undefined) throw Error("diagram_outer_svg in Interactive class is undefined");
         this.inp_variables[variable_name] = value;
 
-        let diagram_svg  = this.get_diagram_svg();
-        let control_svg  = this.get_svg_element(control_svg_name.locator, !this.locator_svg);
+        let diagram_svg = this.get_diagram_svg();
+        let control_svg = this.get_svg_element(control_svg_name.locator, !this.locator_svg);
         this.locator_svg = control_svg;
         // if this is the fist time this function is called, create a locatorHandler
         if (this.locatorHandler == undefined) {
             let locatorHandler = new LocatorHandler(control_svg, diagram_svg, this.global_scale_factor);
             this.locatorHandler = locatorHandler;
             const eventTarget = this.isTargetingDocument() ? document : this.diagram_outer_svg;
-            this.registerEventListener(eventTarget, 'mousemove',  (evt:any) => { locatorHandler.drag(evt); })
-            this.registerEventListener(eventTarget, 'mouseup',    (evt:any) => { locatorHandler.endDrag(evt); })
-            this.registerEventListener(eventTarget, 'touchmove',  (evt:any) => { locatorHandler.drag(evt); })
-            this.registerEventListener(eventTarget, 'touchend',   (evt:any) => { locatorHandler.endDrag(evt); })
-            this.registerEventListener(eventTarget, 'touchcancel',(evt:any) => { locatorHandler.endDrag(evt); })
+            this.registerEventListener(eventTarget, 'mousemove', (evt: any) => { locatorHandler.drag(evt); })
+            this.registerEventListener(eventTarget, 'mouseup', (evt: any) => { locatorHandler.endDrag(evt); })
+            this.registerEventListener(eventTarget, 'touchmove', (evt: any) => { locatorHandler.drag(evt); })
+            this.registerEventListener(eventTarget, 'touchend', (evt: any) => { locatorHandler.endDrag(evt); })
+            this.registerEventListener(eventTarget, 'touchcancel', (evt: any) => { locatorHandler.endDrag(evt); })
         }
 
 
         // ============== callback
-        const f_callback = (pos : Vector2, redraw : boolean = true) => {
+        const f_callback = (pos: Vector2, redraw: boolean = true) => {
             this.inp_variables[variable_name] = pos;
             // don't call the callback on the initialization;
             if (callback && redraw) callback(variable_name, pos);
@@ -357,17 +356,17 @@ export class Interactive {
         // ============== SVG element
 
         let locator_svg = this.locatorHandler!.create_locator_diagram_svg(variable_name, diagram, blink);
-        this.registerEventListener(locator_svg, 'mousedown', (evt:any) => {
+        this.registerEventListener(locator_svg, 'mousedown', (evt: any) => {
             this.locatorHandler!.startDrag(evt, variable_name, locator_svg);
         });
-        this.registerEventListener(locator_svg, 'touchstart', (evt:any) => {
+        this.registerEventListener(locator_svg, 'touchstart', (evt: any) => {
             this.locatorHandler!.startDrag(evt, variable_name, locator_svg);
         });
-        if (callback_rightclick){
-          this.registerEventListener(locator_svg, 'contextmenu', (evt) => {
-            evt.preventDefault();
-            callback_rightclick(variable_name);
-          });
+        if (callback_rightclick) {
+            this.registerEventListener(locator_svg, 'contextmenu', (evt) => {
+                evt.preventDefault();
+                callback_rightclick(variable_name);
+            });
         }
 
         // =============== setter
@@ -377,15 +376,15 @@ export class Interactive {
                 throw Error('Track diagram must be a polygon or curve');
             if (track_diagram.path == undefined) throw Error(`diagram {diagtam.type} must have a path`);
             let track = track_diagram.path.points;
-            setter = (pos : Vector2) => {
+            setter = (pos: Vector2) => {
                 let coord = closest_point_from_points(pos, track);
                 const s = this.global_scale_factor;
                 locator_svg.setAttribute("transform", `translate(${coord.x * s},${-coord.y * s})`)
                 return coord;
             }
         }
-        else{
-            setter = (pos : Vector2) => {
+        else {
+            setter = (pos: Vector2) => {
                 const s = this.global_scale_factor;
                 locator_svg.setAttribute("transform", `translate(${pos.x * s},${-pos.y * s})`)
                 return pos;
@@ -409,10 +408,10 @@ export class Interactive {
      * @param time time of the animation in milliseconds
      * @param display_format_func function to format the display of the value
     */
-    public slider(variable_name : string, min : number = 0, max : number = 100, value : number = 50, step : number = -1, 
-        time : number = 1.5, display_format_func : formatFunction = defaultFormat_f){
+    public slider(variable_name: string, min: number = 0, max: number = 100, value: number = 50, step: number = -1,
+        time: number = 1.5, display_format_func: formatFunction = defaultFormat_f) {
         // if the step is -1, then it is automatically calculated
-        if (step == -1){ step = (max - min) / 100; }
+        if (step == -1) { step = (max - min) / 100; }
 
         // initialize the variable
         this.inp_variables[variable_name] = value;
@@ -425,7 +424,7 @@ export class Interactive {
         // =========== slider ===========
 
         // create the callback function
-        const callback = (val : number, redraw : boolean = true) => {
+        const callback = (val: number, redraw: boolean = true) => {
             this.inp_variables[variable_name] = val;
             labeldiv.innerHTML = display_format_func(variable_name, val, this.display_precision);
             if (redraw) this.draw();
@@ -433,7 +432,7 @@ export class Interactive {
         let slider = create_slider(callback, min, max, value, step);
 
         // ================ setter
-        const setter = (val : number) => {
+        const setter = (val: number) => {
             slider.value = val.toString();
             callback(val, false);
         }
@@ -445,12 +444,12 @@ export class Interactive {
         const interval_time = 1000 * time / nstep;
 
         let playbutton = document.createElement('button');
-        let symboldiv  = document.createElement('div');
+        let symboldiv = document.createElement('div');
         symboldiv.classList.add("diagramatics-slider-playbutton-symbol");
         playbutton.appendChild(symboldiv);
         playbutton.classList.add("diagramatics-slider-playbutton");
         playbutton.onclick = () => {
-            if (this.intervals[variable_name] == undefined){
+            if (this.intervals[variable_name] == undefined) {
                 // if is not playing
                 playbutton.classList.add("paused");
                 this.intervals[variable_name] = setInterval(() => {
@@ -458,7 +457,7 @@ export class Interactive {
                     val += step;
                     // wrap around
                     val = ((val - min) % (max - min)) + min;
-                    
+
                     slider.value = val.toString();
                     callback(val);
                 }, interval_time);
@@ -503,8 +502,8 @@ export class Interactive {
     private init_drag_and_drop() {
         if (this.diagram_outer_svg == undefined) throw Error("diagram_outer_svg in Interactive class is undefined");
         let diagram_svg = this.get_diagram_svg();
-        let dnd_svg     = this.get_svg_element(control_svg_name.dnd, !this.dnd_svg);
-        this.dnd_svg    = dnd_svg;
+        let dnd_svg = this.get_svg_element(control_svg_name.dnd, !this.dnd_svg);
+        this.dnd_svg = dnd_svg;
 
         // if this is the fist time this function is called, create a dragAndDropHandler
         if (this.dragAndDropHandler == undefined) {
@@ -513,14 +512,14 @@ export class Interactive {
             this.dragAndDropHandler = dragAndDropHandler;
             const eventTarget = this.isTargetingDocument() ? document : this.diagram_outer_svg;
             // this.registerEventListener(this.diagram_outer_svg, 'mousemove',  (evt:any) => {dragAndDropHandler.drag(evt);});
-            this.registerEventListener(eventTarget, 'mousemove',  (evt:any) => {dragAndDropHandler.drag(evt);});
-            this.registerEventListener(eventTarget, 'mouseup',    (evt:any) => {dragAndDropHandler.endDrag(evt);});
-            this.registerEventListener(eventTarget, 'touchmove',  (evt:any) => {dragAndDropHandler.drag(evt);});
-            this.registerEventListener(eventTarget, 'touchend',   (evt:any) => {dragAndDropHandler.endDrag(evt);});
-            this.registerEventListener(eventTarget, 'touchcancel',(evt:any) => {dragAndDropHandler.endDrag(evt);});
+            this.registerEventListener(eventTarget, 'mousemove', (evt: any) => { dragAndDropHandler.drag(evt); });
+            this.registerEventListener(eventTarget, 'mouseup', (evt: any) => { dragAndDropHandler.endDrag(evt); });
+            this.registerEventListener(eventTarget, 'touchmove', (evt: any) => { dragAndDropHandler.drag(evt); });
+            this.registerEventListener(eventTarget, 'touchend', (evt: any) => { dragAndDropHandler.endDrag(evt); });
+            this.registerEventListener(eventTarget, 'touchcancel', (evt: any) => { dragAndDropHandler.endDrag(evt); });
         }
     }
-    
+
     set_global_scale_factor(factor: number) {
         this.global_scale_factor = factor;
         if (this.buttonHandler) this.buttonHandler.global_scale_factor = factor;
@@ -543,7 +542,7 @@ export class Interactive {
      *
      * you can also add a sorting function for the target by adding `sorting_function: (a: string, b: string) => number`
     */
-    public dnd_container(name : string, diagram : Diagram, capacity? : number, config? : dnd_container_config) {
+    public dnd_container(name: string, diagram: Diagram, capacity?: number, config?: dnd_container_config) {
         this.init_drag_and_drop();
         this.dragAndDropHandler?.add_container(name, diagram, capacity, config);
     }
@@ -559,9 +558,9 @@ export class Interactive {
      * @param onclickstart_callback callback function (called at the start of the drag)
      */
     public dnd_draggable_to_container(
-        name : string, diagram : Diagram, container_name : string, 
-        callback? : (name:string, container:string) => any,
-        onclickstart_callback? : () => any
+        name: string, diagram: Diagram, container_name: string,
+        callback?: (name: string, container: string) => any,
+        onclickstart_callback?: () => any
     ) {
         this.init_drag_and_drop();
         if (this.dragAndDropHandler == undefined) throw Error("dragAndDropHandler in Interactive class is undefined");
@@ -569,7 +568,7 @@ export class Interactive {
         this.inp_variables[name] = diagram.origin;
         this.dragAndDropHandler.add_draggable_to_container(name, diagram, container_name);
 
-        const dnd_callback = (pos : Vector2, redraw : boolean = true) => {
+        const dnd_callback = (pos: Vector2, redraw: boolean = true) => {
             this.inp_variables[name] = pos;
             if (callback) callback(name, container_name);
             if (redraw) this.draw();
@@ -577,7 +576,7 @@ export class Interactive {
         this.dragAndDropHandler.registerCallback(name, dnd_callback);
         if (onclickstart_callback) this.dragAndDropHandler.register_clickstart_callback(name, onclickstart_callback);
     }
-    
+
     /**
      * Create a drag and drop draggable
      * @param name name of the draggable
@@ -587,9 +586,9 @@ export class Interactive {
      * @param onclickstart_callback callback function (called at the start of the drag)
     */
     public dnd_draggable(
-        name : string, diagram : Diagram, container_diagram? : Diagram, 
-        callback? : (name:string, pos:Vector2) => any,
-        onclickstart_callback? : () => any
+        name: string, diagram: Diagram, container_diagram?: Diagram,
+        callback?: (name: string, pos: Vector2) => any,
+        onclickstart_callback?: () => any
     ) {
         this.init_drag_and_drop();
         if (this.dragAndDropHandler == undefined) throw Error("dragAndDropHandler in Interactive class is undefined");
@@ -597,7 +596,7 @@ export class Interactive {
         this.inp_variables[name] = diagram.origin;
         this.dragAndDropHandler.add_draggable_with_container(name, diagram, container_diagram);
 
-        const dnd_callback = (pos : Vector2, redraw : boolean = true) => {
+        const dnd_callback = (pos: Vector2, redraw: boolean = true) => {
             this.inp_variables[name] = pos;
             if (callback) callback(name, pos);
             if (redraw) this.draw();
@@ -610,11 +609,11 @@ export class Interactive {
      * Register a callback function when a draggable is dropped outside of a container
      * @param callback callback function
      */
-    public dnd_register_drop_outside_callback(callback : (name : string) => any) {
+    public dnd_register_drop_outside_callback(callback: (name: string) => any) {
         this.init_drag_and_drop();
         this.dragAndDropHandler?.register_dropped_outside_callback(callback);
     }
-    
+
     /**
      * Register a validation function when a draggable is moved to a container
      * If the function return false, the draggable will not be moved
@@ -630,7 +629,7 @@ export class Interactive {
      * @param name name of the draggable
      * @param container_name name of the container
      */
-    public dnd_move_to_container(name : string, container_name : string) {
+    public dnd_move_to_container(name: string, container_name: string) {
         this.dragAndDropHandler?.try_move_draggable_to_container(name, container_name);
     }
 
@@ -638,7 +637,7 @@ export class Interactive {
      * Get the data of the drag and drop objects with the format:
      * `{container:string, content:string[]}[]`
     */
-    public get_dnd_data() : DragAndDropData {
+    public get_dnd_data(): DragAndDropData {
         return this.dragAndDropHandler?.getData() ?? [];
     }
 
@@ -646,35 +645,35 @@ export class Interactive {
      * Set the data of the drag and drop objects with the format:
      * `{container:string, content:string[]}[]`
      */
-    public set_dnd_data(data : DragAndDropData) : void {
+    public set_dnd_data(data: DragAndDropData): void {
         this.dragAndDropHandler?.setData(data);
     }
-    
+
     /**
     * reorder the tabindex of the containers
     * @param container_names 
     */
-    public dnd_reorder_tabindex(container_names: string[]){
+    public dnd_reorder_tabindex(container_names: string[]) {
         this.dragAndDropHandler?.reorder_svg_container_tabindex(container_names);
     }
-    
+
     /**
     * Get the content size of a container
     */
-    public  get_dnd_container_content_size(container_name : string) : [number,number] {
-       if (!this.dragAndDropHandler) return [NaN,NaN];
-       return this.dragAndDropHandler.get_container_content_size(container_name);
+    public get_dnd_container_content_size(container_name: string): [number, number] {
+        if (!this.dragAndDropHandler) return [NaN, NaN];
+        return this.dragAndDropHandler.get_container_content_size(container_name);
     }
-    
+
     /**
      * Set whether the content of the container should be sorted or not
      */
-    public set_dnd_content_sort(sort_content : boolean) : void {
+    public set_dnd_content_sort(sort_content: boolean): void {
         if (!this.dragAndDropHandler) return;
         this.dragAndDropHandler.sort_content = sort_content;
     }
-    
-    public remove_dnd_draggable(name : string) {
+
+    public remove_dnd_draggable(name: string) {
         this.dragAndDropHandler?.remove_draggable(name);
     }
     public remove_locator(name: string) {
@@ -694,7 +693,7 @@ export class Interactive {
      * @param diagram diagram of the object
      * @returns the svg element of the object
      */
-    public custom_object(id : string, classlist: string[], diagram : Diagram) : SVGSVGElement {
+    public custom_object(id: string, classlist: string[], diagram: Diagram): SVGSVGElement {
         if (this.diagram_outer_svg == undefined) throw Error("diagram_outer_svg in Interactive class is undefined");
         let diagram_svg = this.get_diagram_svg();
         let control_svg = this.get_svg_element(control_svg_name.custom, !this.custom_svg);
@@ -703,8 +702,8 @@ export class Interactive {
         f_draw_to_svg(svg, svg, diagram, true, false, calculate_text_scale(diagram_svg), this.global_scale_factor);
         svg.setAttribute("overflow", "visible");
         svg.setAttribute("class", classlist.join(" "));
-        svg.setAttribute("id",id);
-        
+        svg.setAttribute("id", id);
+
         control_svg.setAttribute("viewBox", diagram_svg.getAttribute("viewBox") as string);
         control_svg.setAttribute("preserveAspectRatio", diagram_svg.getAttribute("preserveAspectRatio") as string);
         control_svg.style.overflow = "visible";
@@ -713,7 +712,7 @@ export class Interactive {
         this.custom_svg = control_svg;
         return svg;
     }
-    
+
     /**
      * Create a custom interactive object
      * @param id id of the object
@@ -721,7 +720,7 @@ export class Interactive {
      * @param diagram diagram of the object
      * @returns the <g> svg element of the object
      */
-    public custom_object_g(id : string, classlist: string[], diagram : Diagram) : SVGGElement {
+    public custom_object_g(id: string, classlist: string[], diagram: Diagram): SVGGElement {
         if (this.diagram_outer_svg == undefined) throw Error("diagram_outer_svg in Interactive class is undefined");
         let diagram_svg = this.get_diagram_svg();
         let control_svg = this.get_svg_element(control_svg_name.custom, !this.custom_svg);
@@ -730,8 +729,8 @@ export class Interactive {
         f_draw_to_svg(control_svg, g, diagram, true, false, calculate_text_scale(diagram_svg), this.global_scale_factor);
         g.setAttribute("overflow", "visible");
         g.setAttribute("class", classlist.join(" "));
-        g.setAttribute("id",id);
-        
+        g.setAttribute("id", id);
+
         control_svg.setAttribute("viewBox", diagram_svg.getAttribute("viewBox") as string);
         control_svg.setAttribute("preserveAspectRatio", diagram_svg.getAttribute("preserveAspectRatio") as string);
         control_svg.style.overflow = "visible";
@@ -744,7 +743,7 @@ export class Interactive {
     private init_button() {
         if (this.diagram_outer_svg == undefined) throw Error("diagram_outer_svg in Interactive class is undefined");
         let diagram_svg = this.get_diagram_svg();
-        let button_svg  = this.get_svg_element(control_svg_name.button, !this.button_svg);
+        let button_svg = this.get_svg_element(control_svg_name.button, !this.button_svg);
         this.button_svg = button_svg;
 
         // if this is the fist time this function is called, create a dragAndDropHandler
@@ -763,24 +762,24 @@ export class Interactive {
      * @param state initial state of the button
      * @param callback callback function when the button state is changed
     */
-    public button_toggle(name : string, diagram_on : Diagram, diagram_off : Diagram, state : boolean = false,
-        callback? : (name : string, state : boolean) => any
-    ){
+    public button_toggle(name: string, diagram_on: Diagram, diagram_off: Diagram, state: boolean = false,
+        callback?: (name: string, state: boolean) => any
+    ) {
         this.init_button();
         if (this.buttonHandler == undefined) throw Error("buttonHandler in Interactive class is undefined");
 
         this.inp_variables[name] = state;
 
         let main_callback;
-        if (callback){
-            main_callback = (state : boolean, redraw : boolean = true) => { 
-                this.inp_variables[name] = state 
+        if (callback) {
+            main_callback = (state: boolean, redraw: boolean = true) => {
+                this.inp_variables[name] = state
                 callback(name, state);
                 if (redraw) this.draw();
             }
         } else {
-            main_callback = (state : boolean, redraw : boolean = true) => { 
-                this.inp_variables[name] = state 
+            main_callback = (state: boolean, redraw: boolean = true) => {
+                this.inp_variables[name] = state
                 if (redraw) this.draw();
             }
 
@@ -797,14 +796,14 @@ export class Interactive {
      * @param diagram_pressed diagram of the button when it is pressed
      * @param callback callback function when the button is clicked
     */
-    public button_click(name : string, diagram : Diagram, diagram_pressed : Diagram, callback : () => any){
+    public button_click(name: string, diagram: Diagram, diagram_pressed: Diagram, callback: () => any) {
         this.init_button();
         if (this.buttonHandler == undefined) throw Error("buttonHandler in Interactive class is undefined");
 
         let n_callback = () => { callback(); this.draw(); }
         this.buttonHandler.try_add_click(name, diagram, diagram_pressed, diagram, n_callback);
     }
-    
+
     /**
      * Create a click button
      * @param name name of the button
@@ -813,7 +812,7 @@ export class Interactive {
      * @param diagram_hover diagram of the button when it is hovered
      * @param callback callback function when the button is clicked
     */
-    public button_click_hover(name : string, diagram : Diagram, diagram_pressed : Diagram, diagram_hover : Diagram, callback : () => any){
+    public button_click_hover(name: string, diagram: Diagram, diagram_pressed: Diagram, diagram_hover: Diagram, callback: () => any) {
         this.init_button();
         if (this.buttonHandler == undefined) throw Error("buttonHandler in Interactive class is undefined");
 
@@ -825,7 +824,7 @@ export class Interactive {
 // ========== functions
 //
 
-function set_viewbox(taget : SVGSVGElement | undefined, source : SVGSVGElement | undefined) {
+function set_viewbox(taget: SVGSVGElement | undefined, source: SVGSVGElement | undefined) {
     if (taget == undefined) return;
     if (source == undefined) return;
     taget.setAttribute("viewBox", source.getAttribute("viewBox") as string);
@@ -833,7 +832,7 @@ function set_viewbox(taget : SVGSVGElement | undefined, source : SVGSVGElement |
 }
 
 
-function create_slider(callback : (val : number) => any, min : number = 0, max : number = 100, value : number = 50, step : number) : HTMLInputElement {
+function create_slider(callback: (val: number) => any, min: number = 0, max: number = 100, value: number = 50, step: number): HTMLInputElement {
     // create a slider
     let slider = document.createElement("input");
     slider.type = "range";
@@ -858,11 +857,11 @@ function create_slider(callback : (val : number) => any, min : number = 0, max :
         slider.style.setProperty('--thumb-bg', '#111827');
         slider.style.setProperty('--thumb-shadow', '0 2px 6px rgba(0,0,0,0.2)');
     };
-    slider.addEventListener('mousedown',  onPressStart);
-    slider.addEventListener('mouseup',    onPressEnd);
+    slider.addEventListener('mousedown', onPressStart);
+    slider.addEventListener('mouseup', onPressEnd);
     slider.addEventListener('mouseleave', onPressEnd);
     slider.addEventListener('touchstart', onPressStart, { passive: true });
-    slider.addEventListener('touchend',   onPressEnd);
+    slider.addEventListener('touchend', onPressEnd);
 
     return slider;
 }
@@ -870,7 +869,7 @@ function create_slider(callback : (val : number) => any, min : number = 0, max :
 // function create_locator() : SVGCircleElement {
 // }
 //
-function closest_point_from_points(p : Vector2, points : Vector2[]) : Vector2 {
+function closest_point_from_points(p: Vector2, points: Vector2[]): Vector2 {
     if (points.length == 0) return p;
     let closest_d2 = Infinity;
     let closest_p = points[0];
@@ -886,20 +885,20 @@ function closest_point_from_points(p : Vector2, points : Vector2[]) : Vector2 {
 
 // helper to calculate CTM in firefox
 // there's a well known bug in firefox about `getScreenCTM()`
-function firefox_calcCTM(svgelem : SVGSVGElement) : DOMMatrix {
+function firefox_calcCTM(svgelem: SVGSVGElement): DOMMatrix {
     let ctm = svgelem.getScreenCTM() as DOMMatrix;
     // get screen width and height of the element
-    let screenWidth  = svgelem.width.baseVal.value;
+    let screenWidth = svgelem.width.baseVal.value;
     let screenHeight = svgelem.height.baseVal.value;
-    let viewBox      = svgelem.viewBox.baseVal;
-    let scalex       = screenWidth/viewBox.width;
-    let scaley       = screenHeight/viewBox.height;
-    let scale        = Math.min(scalex, scaley);
+    let viewBox = svgelem.viewBox.baseVal;
+    let scalex = screenWidth / viewBox.width;
+    let scaley = screenHeight / viewBox.height;
+    let scale = Math.min(scalex, scaley);
 
     // let translateX = (screenWidth/2  + ctm.e) - (viewBox.width/2  + viewBox.x) * scale;
     // let translateY = (screenHeight/2 + ctm.f) - (viewBox.height/2 + viewBox.y) * scale;
-    let translateX = (screenWidth/2 ) - (viewBox.width/2  + viewBox.x) * scale;
-    let translateY = (screenHeight/2) - (viewBox.height/2 + viewBox.y) * scale;
+    let translateX = (screenWidth / 2) - (viewBox.width / 2 + viewBox.x) * scale;
+    let translateY = (screenHeight / 2) - (viewBox.height / 2 + viewBox.y) * scale;
     return DOMMatrix.fromMatrix(ctm).translate(translateX, translateY).scale(scale);
 }
 
@@ -911,31 +910,30 @@ type DnDEvent = TouchEvent | Touch | MouseEvent
  * @param clientPos the client position
  * @param svgelem the svg element
  */
-export function clientPos_to_svgPos(clientPos : {x : number, y : number}, svgelem : SVGSVGElement) : 
-{x : number, y : number} {
+export function clientPos_to_svgPos(clientPos: { x: number, y: number }, svgelem: SVGSVGElement): { x: number, y: number } {
     // var CTM = this.control_svg.getScreenCTM() as DOMMatrix;
     // NOTE: there's a well known bug in firefox about `getScreenCTM()`
     // check if the browser is firefox
-    let CTM : DOMMatrix;
+    let CTM: DOMMatrix;
     if (navigator.userAgent.toLowerCase().indexOf('firefox') > -1) {
         CTM = firefox_calcCTM(svgelem);
     } else {
         CTM = svgelem.getScreenCTM() as DOMMatrix;
     }
     // console.log(CTM);
-    
+
     return {
-        x : (clientPos.x - CTM.e) / CTM.a,
-        y : - (clientPos.y - CTM.f) / CTM.d
+        x: (clientPos.x - CTM.e) / CTM.a,
+        y: - (clientPos.y - CTM.f) / CTM.d
     }
 }
 
-function getMousePosition(evt : LocatorEvent, svgelem : SVGSVGElement) : {x : number, y : number} {
+function getMousePosition(evt: LocatorEvent, svgelem: SVGSVGElement): { x: number, y: number } {
     // firefox doesn't support `TouchEvent`, we need to check for it
     if (window.TouchEvent && evt instanceof TouchEvent) { evt = evt.touches[0]; }
     let clientPos = {
-        x : (evt as Touch | MouseEvent).clientX,
-        y : (evt as Touch | MouseEvent).clientY
+        x: (evt as Touch | MouseEvent).clientX,
+        y: (evt as Touch | MouseEvent).clientY
     }
     return clientPos_to_svgPos(clientPos, svgelem);
 }
@@ -946,43 +944,43 @@ function getMousePosition(evt : LocatorEvent, svgelem : SVGSVGElement) : {x : nu
  * @param svgelem the svg element
  * @returns the SVG coordinate
  */
-export function get_SVGPos_from_event(evt : LocatorEvent, svgelem : SVGSVGElement) : {x : number, y : number} {
+export function get_SVGPos_from_event(evt: LocatorEvent, svgelem: SVGSVGElement): { x: number, y: number } {
     return getMousePosition(evt, svgelem);
 }
 
 class LocatorHandler {
 
-    selectedElement  : SVGElement | null = null;
-    selectedVariable : string | null = null;
-    mouseOffset : Vector2 = V2(0,0);
-    callbacks : {[key : string] : (pos : Vector2, redraw?: boolean) => any} = {};
-    setter    : {[key : string] : (pos : Vector2) => any} = {};
+    selectedElement: SVGElement | null = null;
+    selectedVariable: string | null = null;
+    mouseOffset: Vector2 = V2(0, 0);
+    callbacks: { [key: string]: (pos: Vector2, redraw?: boolean) => any } = {};
+    setter: { [key: string]: (pos: Vector2) => any } = {};
     // store blinking circle_outer so that we can turn it off
-    svg_elements: {[key : string] : SVGElement} = {};
-    blinking_circle_outers : Element[] = [];
-    first_touch_callback : Function | null = null;
-    element_pos : {[key : string] : Vector2} = {};
+    svg_elements: { [key: string]: SVGElement } = {};
+    blinking_circle_outers: Element[] = [];
+    first_touch_callback: Function | null = null;
+    element_pos: { [key: string]: Vector2 } = {};
 
-    constructor(public control_svg : SVGSVGElement, public diagram_svg : SVGSVGElement, public global_scale_factor : number){
+    constructor(public control_svg: SVGSVGElement, public diagram_svg: SVGSVGElement, public global_scale_factor: number) {
     }
 
-    startDrag(evt : LocatorEvent, variable_name : string, selectedElement : SVGElement) {
-        this.selectedElement  = selectedElement;
+    startDrag(evt: LocatorEvent, variable_name: string, selectedElement: SVGElement) {
+        this.selectedElement = selectedElement;
         this.selectedVariable = variable_name;
-        
+
         const s = this.global_scale_factor;
         if (evt instanceof MouseEvent) { evt.preventDefault(); }
         if (window.TouchEvent && evt instanceof TouchEvent) { evt.preventDefault(); }
         let coord = getMousePosition(evt, this.control_svg);
-        let mousepos = V2(coord.x/s, coord.y/s);
+        let mousepos = V2(coord.x / s, coord.y / s);
         let elementpos = this.element_pos[variable_name];
-        if (elementpos){
+        if (elementpos) {
             this.mouseOffset = elementpos.sub(mousepos);
         }
-        
+
         this.handleBlinking();
     }
-    drag(evt : LocatorEvent) {
+    drag(evt: LocatorEvent) {
         if (this.selectedElement == undefined) return;
         if (this.selectedVariable == undefined) return;
 
@@ -992,7 +990,7 @@ class LocatorHandler {
         let coord = getMousePosition(evt, this.control_svg);
 
         const s = this.global_scale_factor;
-        let pos = V2(coord.x/s, coord.y/s).add(this.mouseOffset);
+        let pos = V2(coord.x / s, coord.y / s).add(this.mouseOffset);
         this.element_pos[this.selectedVariable] = pos;
         // check if setter for this.selectedVariable exists
         // if it does, call it
@@ -1014,13 +1012,13 @@ class LocatorHandler {
         this.control_svg.setAttribute("viewBox", this.diagram_svg.getAttribute("viewBox") as string);
         this.control_svg.setAttribute("preserveAspectRatio", this.diagram_svg.getAttribute("preserveAspectRatio") as string);
     }
-    endDrag(_ : LocatorEvent) {
+    endDrag(_: LocatorEvent) {
         this.selectedElement = null;
         this.selectedVariable = null;
     }
-    
-    public remove(variable_name : string) : void {
-        if (this.selectedVariable == variable_name){
+
+    public remove(variable_name: string): void {
+        if (this.selectedVariable == variable_name) {
             this.selectedElement = null;
             this.selectedVariable = null;
         }
@@ -1031,20 +1029,20 @@ class LocatorHandler {
         delete this.element_pos[variable_name];
     }
 
-    setPos(name : string, pos : Vector2){
+    setPos(name: string, pos: Vector2) {
         this.element_pos[name] = pos;
         this.callbacks[name](pos, false);
     }
-    registerCallback(name : string, callback : (pos : Vector2) => any){
+    registerCallback(name: string, callback: (pos: Vector2) => any) {
         this.callbacks[name] = callback;
     }
-    registerSetter(name : string, setter : (pos : Vector2) => any){
+    registerSetter(name: string, setter: (pos: Vector2) => any) {
         this.setter[name] = setter;
     }
-    addBlinkingCircleOuter(circle_outer : Element){
+    addBlinkingCircleOuter(circle_outer: Element) {
         this.blinking_circle_outers.push(circle_outer);
     }
-    handleBlinking(){
+    handleBlinking() {
         // turn off all blinking_circle_outers after the first touch
         if (this.blinking_circle_outers.length == 0) return;
         for (let i = 0; i < this.blinking_circle_outers.length; i++) {
@@ -1054,36 +1052,36 @@ class LocatorHandler {
         if (this.first_touch_callback != null) this.first_touch_callback();
     }
 
-    create_locator_diagram_svg(name: string, diagram : Diagram, blink : boolean) : SVGGElement {
+    create_locator_diagram_svg(name: string, diagram: Diagram, blink: boolean): SVGGElement {
         let g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-        f_draw_to_svg(this.control_svg, g, diagram.position(V2(0,0)), true, false, calculate_text_scale(this.diagram_svg), this.global_scale_factor);
+        f_draw_to_svg(this.control_svg, g, diagram.position(V2(0, 0)), true, false, calculate_text_scale(this.diagram_svg), this.global_scale_factor);
         g.style.cursor = "pointer";
         g.setAttribute("overflow", "visible");
         if (blink) {
             g.classList.add("diagramatics-locator-blink");
             this.addBlinkingCircleOuter(g);
         }
-        
-        if (this.svg_elements[name]){
+
+        if (this.svg_elements[name]) {
             this.svg_elements[name].replaceWith(g);
         } else {
             this.control_svg.appendChild(g);
         }
-        
-        
+
+
         this.svg_elements[name] = g;
         this.element_pos[name]
         return g;
     }
 
-    create_locator_circle_pointer_svg(name: string, radius : number, value : Vector2, color : string, blink : boolean) : SVGGElement {
+    create_locator_circle_pointer_svg(name: string, radius: number, value: Vector2, color: string, blink: boolean): SVGGElement {
         let g = document.createElementNS("http://www.w3.org/2000/svg", "g");
         g.setAttribute("overflow", "visible");
         g.style.cursor = "pointer";
 
         const s = this.global_scale_factor;
-        const thumbR  = radius * 0.92;
-        const strokeW = 4 / s;
+        const thumbR = 3 / s;    // fixed ~14px diameter
+        const strokeW = 2.5 / s;
 
         // Visual group — CSS scale transition for press animation
         let visualGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
@@ -1102,7 +1100,7 @@ class LocatorHandler {
 
         // Transparent hit area — same size as thumb
         let hitArea = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        hitArea.setAttribute("r", thumbR.toString());
+        hitArea.setAttribute("r", (thumbR * 0.5).toString());
         hitArea.setAttribute("fill", "transparent");
         hitArea.setAttribute("stroke", "none");
         g.appendChild(hitArea);
@@ -1126,7 +1124,7 @@ class LocatorHandler {
         }, { passive: true });
 
         g.setAttribute("transform", `translate(${value.x * s},${-value.y * s})`)
-        if (this.svg_elements[name]){
+        if (this.svg_elements[name]) {
             this.svg_elements[name].replaceWith(g);
         } else {
             this.control_svg.appendChild(g);
@@ -1139,65 +1137,65 @@ class LocatorHandler {
 }
 
 type DragAndDropContainerData = {
-    name : string,
-    position : Vector2,
-    svgelement? : SVGElement,
-    diagram : Diagram,
-    content : string[],
-    capacity : number,
-    config : dnd_container_config,
+    name: string,
+    position: Vector2,
+    svgelement?: SVGElement,
+    diagram: Diagram,
+    content: string[],
+    capacity: number,
+    config: dnd_container_config,
 }
 type DragAndDropDraggableData = {
-    name : string,
-    position : Vector2,
-    svgelement? : SVGElement,
-    diagram : Diagram,
-    diagram_size : [number, number],
-    container : string,
+    name: string,
+    position: Vector2,
+    svgelement?: SVGElement,
+    diagram: Diagram,
+    diagram_size: [number, number],
+    container: string,
 }
-type DragAndDropData = {container:string, content:string[]}[]
+type DragAndDropData = { container: string, content: string[] }[]
 
 enum dnd_type {
     container = "diagramatics-dnd-container",
     draggable = "diagramatics-dnd-draggable",
-    ghost     = "diagramatics-dnd-draggable-ghost",
+    ghost = "diagramatics-dnd-draggable-ghost",
 }
 
 //TODO: add more
 type dnd_container_positioning_type =
-    {type:"horizontal-uniform"} |
-    {type:"vertical-uniform"} |
-    {type:"horizontal", padding:number} |
-    {type:"vertical", padding:number} |
-    {type:"flex-row", padding:number|[number,number], gap:number|[number,number], vertical_alignment?:VerticalAlignment, horizontal_alignment?:HorizontalAlignment} |
-    {type:"grid", value:[number, number]}
+    { type: "horizontal-uniform" } |
+    { type: "vertical-uniform" } |
+    { type: "horizontal", padding: number } |
+    { type: "vertical", padding: number } |
+    { type: "flex-row", padding: number | [number, number], gap: number | [number, number], vertical_alignment?: VerticalAlignment, horizontal_alignment?: HorizontalAlignment } |
+    { type: "grid", value: [number, number] }
 type dnd_container_config = dnd_container_positioning_type & {
     custom_region_box?: [Vector2, Vector2]
-    sorting_function?: (a : string, b : string) => number
+    sorting_function?: (a: string, b: string) => number
 }
 
 class DragAndDropHandler {
-    containers : {[key : string] : DragAndDropContainerData} = {};
-    draggables : {[key : string] : DragAndDropDraggableData} = {};
-    callbacks : {[key : string] : (pos : Vector2) => any} = {};
-    onclickstart_callback : {[key : string] : () => any} = {};
-    hoveredContainerName : string | null = null;
-    draggedElementName : string | null = null;
-    draggedElementGhost : SVGElement | null = null;
-    dropped_outside_callback : ((name : string) => any) | null = null;
-    move_validation_function : ((draggable_name: string, target_name: string) => boolean) | null = null;
-    sort_content : boolean = false;
-    dom_to_id_map : WeakMap<HTMLElement|SVGElement, string>;
+    containers: { [key: string]: DragAndDropContainerData } = {};
+    draggables: { [key: string]: DragAndDropDraggableData } = {};
+    callbacks: { [key: string]: (pos: Vector2) => any } = {};
+    onclickstart_callback: { [key: string]: () => any } = {};
+    hoveredContainerName: string | null = null;
+    draggedElementName: string | null = null;
+    draggedElementGhost: SVGElement | null = null;
+    dropped_outside_callback: ((name: string) => any) | null = null;
+    move_validation_function: ((draggable_name: string, target_name: string) => boolean) | null = null;
+    sort_content: boolean = false;
+    dom_to_id_map: WeakMap<HTMLElement | SVGElement, string>;
     active_draggable_name: string | null = null; // active from tap/enter
-    focus_padding : number = 1;
+    focus_padding: number = 1;
 
-    constructor(public dnd_svg : SVGSVGElement, public diagram_svg : SVGSVGElement, public global_scale_factor : number){
+    constructor(public dnd_svg: SVGSVGElement, public diagram_svg: SVGSVGElement, public global_scale_factor: number) {
         this.dom_to_id_map = new WeakMap();
     }
 
     public add_container(
-        name : string, diagram : Diagram, 
-        capacity? : number , config? : dnd_container_config,
+        name: string, diagram: Diagram,
+        capacity?: number, config?: dnd_container_config,
     ) {
         if (this.containers[name] != undefined) {
             this.replace_container_svg(name, diagram, capacity, config);
@@ -1205,37 +1203,37 @@ class DragAndDropHandler {
         }
 
         this.containers[name] = {
-            name, diagram, 
-            position : diagram.origin, 
-            content : [], 
-            config : config ?? {type:"horizontal-uniform"},
-            capacity : capacity ?? 1
+            name, diagram,
+            position: diagram.origin,
+            content: [],
+            config: config ?? { type: "horizontal-uniform" },
+            capacity: capacity ?? 1
         };
     }
 
-    generate_position_map(bbox : BBox, config : dnd_container_config, capacity : number, content : string[]) 
-    : Vector2[] {
+    generate_position_map(bbox: BBox, config: dnd_container_config, capacity: number, content: string[])
+        : Vector2[] {
         const p_center = bbox[0].add(bbox[1]).scale(0.5);
-        switch (config.type){
+        switch (config.type) {
             case "horizontal-uniform": {
                 let width = bbox[1].x - bbox[0].x;
                 let dx = width / capacity;
                 let x0 = bbox[0].x + dx / 2;
-                let y  = p_center.y;
-                return range(0, capacity).map(i => V2(x0 + dx*i, y));
+                let y = p_center.y;
+                return range(0, capacity).map(i => V2(x0 + dx * i, y));
             }
             case "vertical-uniform": {
                 //NOTE: top to bottom
                 let height = bbox[1].y - bbox[0].y;
                 let dy = height / capacity;
-                let x  = p_center.x;
+                let x = p_center.x;
                 let y0 = bbox[1].y - dy / 2;
-                return range(0, capacity).map(i => V2(x, y0 - dy*i));
+                return range(0, capacity).map(i => V2(x, y0 - dy * i));
             }
-            case "grid" : {
-                let [nx,ny] = config.value;
+            case "grid": {
+                let [nx, ny] = config.value;
                 let height = bbox[1].y - bbox[0].y;
-                let width  = bbox[1].x - bbox[0].x;
+                let width = bbox[1].x - bbox[0].x;
                 let dx = width / nx;
                 let dy = height / ny;
                 let x0 = bbox[0].x + dx / 2;
@@ -1246,67 +1244,67 @@ class DragAndDropHandler {
                     return V2(x, y);
                 });
             }
-            case "vertical" : {
+            case "vertical": {
                 const p_top_center = V2(p_center.x, bbox[1].y);
-                const sizelist = content.map((name) => this.draggables[name]?.diagram_size ?? [0,0]);
-                const size_rects = sizelist.map(([w,h]) => rectangle(w,h).mut());
+                const sizelist = content.map((name) => this.draggables[name]?.diagram_size ?? [0, 0]);
+                const size_rects = sizelist.map(([w, h]) => rectangle(w, h).mut());
                 const distributed = distribute_vertical_and_align(size_rects, config.padding).mut()
                     .move_origin('top-center').position(p_top_center)
-                    .translate(V2(0,-config.padding));
+                    .translate(V2(0, -config.padding));
                 return distributed.children.map(d => d.origin);
             }
-            case "horizontal" : {
+            case "horizontal": {
                 const p_center_left = V2(bbox[0].x, p_center.y);
-                const sizelist = content.map((name) => this.draggables[name]?.diagram_size ?? [0,0]);
-                const size_rects = sizelist.map(([w,h]) => rectangle(w,h).mut());
+                const sizelist = content.map((name) => this.draggables[name]?.diagram_size ?? [0, 0]);
+                const size_rects = sizelist.map(([w, h]) => rectangle(w, h).mut());
                 const distributed = distribute_horizontal_and_align(size_rects, config.padding).mut()
                     .move_origin('center-left').position(p_center_left)
-                    .translate(V2(config.padding,0));
+                    .translate(V2(config.padding, 0));
                 return distributed.children.map(d => d.origin);
             }
-            case "flex-row" : {
+            case "flex-row": {
                 const pad = expand_directional_value(config.padding ?? 0);
                 const gap = config.gap ? expand_directional_value(config.gap) : pad;
                 const container_width = bbox[1].x - bbox[0].x - pad[1] - pad[3];
-                const sizelist = content.map((name) => this.draggables[name]?.diagram_size ?? [0,0]);
-                const size_rects = sizelist.map(([w,h]) => rectangle(w,h).mut());
+                const sizelist = content.map((name) => this.draggables[name]?.diagram_size ?? [0, 0]);
+                const size_rects = sizelist.map(([w, h]) => rectangle(w, h).mut());
                 let distributed = distribute_variable_row(
                     size_rects, container_width, gap[0], gap[1],
                     config.vertical_alignment, config.horizontal_alignment
                 ).mut()
-                switch (config.horizontal_alignment){
-                    case 'center' :{
+                switch (config.horizontal_alignment) {
+                    case 'center': {
                         distributed = distributed
-                            .move_origin('top-center').position(V2(p_center.x, bbox[1].y-pad[0]));
+                            .move_origin('top-center').position(V2(p_center.x, bbox[1].y - pad[0]));
                     } break;
-                    case 'right' : {
+                    case 'right': {
                         distributed = distributed
-                            .move_origin('top-right').position(V2(bbox[1].x-pad[1], bbox[1].y-pad[0]));
+                            .move_origin('top-right').position(V2(bbox[1].x - pad[1], bbox[1].y - pad[0]));
                     } break;
                     case 'center':
                     default: {
                         distributed = distributed
-                            .move_origin('top-left').position(V2(bbox[0].x+pad[3], bbox[1].y-pad[0]));
+                            .move_origin('top-left').position(V2(bbox[0].x + pad[3], bbox[1].y - pad[0]));
                     }
                 }
                 return distributed.children.map(d => d.origin);
             }
-            default : {
+            default: {
                 return [];
             }
         }
     }
-    
-    get_container_content_size(container_name : string) : [number,number] {
+
+    get_container_content_size(container_name: string): [number, number] {
         const container = this.containers[container_name];
         if (container == undefined) return [NaN, NaN];
         const pad = (container.config as any).padding ?? 0;
         const content_diagrams = container.content.map(name => this.draggables[name]?.diagram ?? empty());
         const [width, height] = size(diagram_combine(...content_diagrams));
-        return [width + 2*pad, height + 2*pad];
+        return [width + 2 * pad, height + 2 * pad];
     }
-    
-    private replace_draggable_svg(name : string, diagram : Diagram) {
+
+    private replace_draggable_svg(name: string, diagram: Diagram) {
         let draggable = this.draggables[name];
         if (draggable == undefined) return;
         let outer_g = draggable.svgelement?.parentNode as SVGGElement;
@@ -1317,7 +1315,7 @@ class DragAndDropHandler {
         this.add_draggable_svg(name, diagram, outer_g);
         this.reposition_container_content(draggable.container)
     }
-    private replace_container_svg(name : string, diagram : Diagram, capacity? : number, config? : dnd_container_config) {
+    private replace_container_svg(name: string, diagram: Diagram, capacity?: number, config?: dnd_container_config) {
         let container = this.containers[name];
         if (container == undefined) return;
         const outer_g = this.get_container_outer_g(name);
@@ -1330,7 +1328,7 @@ class DragAndDropHandler {
         this.reposition_container_content(name);
     }
 
-    public add_draggable_to_container(name : string, diagram : Diagram, container_name : string) {
+    public add_draggable_to_container(name: string, diagram: Diagram, container_name: string) {
         if (this.draggables[name] != undefined) {
             this.replace_draggable_svg(name, diagram);
             this.move_draggable_to_container(name, container_name, true);
@@ -1338,11 +1336,11 @@ class DragAndDropHandler {
         }
 
         const diagram_size = size(diagram);
-        this.draggables[name] = {name, diagram : diagram.mut() , diagram_size, position : diagram.origin, container : container_name};
+        this.draggables[name] = { name, diagram: diagram.mut(), diagram_size, position: diagram.origin, container: container_name };
         this.containers[container_name].content.push(name);
     }
 
-    public add_draggable_with_container(name : string, diagram : Diagram, container_diagram? : Diagram) {
+    public add_draggable_with_container(name: string, diagram: Diagram, container_diagram?: Diagram) {
         if (this.draggables[name] != undefined) {
             this.replace_draggable_svg(name, diagram);
             return;
@@ -1356,10 +1354,10 @@ class DragAndDropHandler {
 
         const diagram_size = size(diagram);
         this.containers[initial_container_name].content.push(name);
-        this.draggables[name] = {name, diagram : diagram.mut() , diagram_size, position : diagram.origin, container : initial_container_name};
+        this.draggables[name] = { name, diagram: diagram.mut(), diagram_size, position: diagram.origin, container: initial_container_name };
     }
-    
-    public remove_draggable(name : string) : void {
+
+    public remove_draggable(name: string): void {
         for (let container_name in this.containers) {
             const container = this.containers[container_name];
             container.content = container.content.filter(e => e != name);
@@ -1368,18 +1366,18 @@ class DragAndDropHandler {
         delete this.draggables[name];
     }
 
-    registerCallback(name : string, callback : (pos : Vector2) => any){
+    registerCallback(name: string, callback: (pos: Vector2) => any) {
         this.callbacks[name] = callback;
     }
-    register_clickstart_callback(name : string, callback : () => any){
+    register_clickstart_callback(name: string, callback: () => any) {
         this.onclickstart_callback[name] = callback;
     }
 
-    register_dropped_outside_callback(callback : (name : string) => any){
+    register_dropped_outside_callback(callback: (name: string) => any) {
         this.dropped_outside_callback = callback;
     }
-    
-    register_move_validation_function(fun: (draggable_name: string, target_name: string) => boolean){
+
+    register_move_validation_function(fun: (draggable_name: string, target_name: string) => boolean) {
         this.move_validation_function = fun;
     }
 
@@ -1388,19 +1386,19 @@ class DragAndDropHandler {
         this.dnd_svg.setAttribute("viewBox", this.diagram_svg.getAttribute("viewBox") as string);
         this.dnd_svg.setAttribute("preserveAspectRatio", this.diagram_svg.getAttribute("preserveAspectRatio") as string);
     }
-    public drawSvg(){
-        for (let container_name in this.containers){
+    public drawSvg() {
+        for (let container_name in this.containers) {
             const container_data = this.containers[container_name];
             if (container_data?.svgelement == undefined) {
                 const outer_g = document.createElementNS("http://www.w3.org/2000/svg", "g");
                 this.dnd_svg.append(outer_g);
                 this.add_container_svg(container_name, container_data.diagram, outer_g);
             }
-            
+
             const outer_g = this.get_container_outer_g(container_name)
             if (outer_g == undefined) continue;
-            
-            for (let draggable_name of container_data.content){
+
+            for (let draggable_name of container_data.content) {
                 const draggable_data = this.draggables[draggable_name];
                 if (draggable_data?.svgelement) continue;
                 this.add_draggable_svg(draggable_name, draggable_data.diagram, outer_g)
@@ -1412,15 +1410,15 @@ class DragAndDropHandler {
         }
     }
 
-    getData() : DragAndDropData {
-        let data : DragAndDropData = []
-        for (let name in this.containers){
-            data.push({container : name, content : this.containers[name].content});
+    getData(): DragAndDropData {
+        let data: DragAndDropData = []
+        for (let name in this.containers) {
+            data.push({ container: name, content: this.containers[name].content });
         }
         return data;
     }
 
-    setData(data : DragAndDropData) {
+    setData(data: DragAndDropData) {
         try {
             for (let containerdata of data) {
                 for (let content of containerdata.content) {
@@ -1432,12 +1430,12 @@ class DragAndDropHandler {
         }
     }
 
-    diagram_container_from_draggable(diagram : Diagram) : Diagram {
+    diagram_container_from_draggable(diagram: Diagram): Diagram {
         let rect = rectangle_corner(...diagram.bounding_box()).move_origin(diagram.origin);
         return rect.strokedasharray([5]);
     }
-    
-    register_tap_enter(g: SVGElement, callback : (keyboard?: boolean) => any) {
+
+    register_tap_enter(g: SVGElement, callback: (keyboard?: boolean) => any) {
         g.onclick = (e) => {
             callback(false);
         }
@@ -1445,8 +1443,8 @@ class DragAndDropHandler {
             if (evt.key == "Enter") callback(true);
         }
     }
-    tap_enter_draggable(draggable_name: string, keyboard?: boolean){
-        if (this.active_draggable_name == null){
+    tap_enter_draggable(draggable_name: string, keyboard?: boolean) {
+        if (this.active_draggable_name == null) {
             // select the draggable
             this.reset_picked_class()
             this.active_draggable_name = draggable_name;
@@ -1468,46 +1466,46 @@ class DragAndDropHandler {
             this.active_draggable_name = null;
         }
     }
-    tap_enter_container(container_name: string){
+    tap_enter_container(container_name: string) {
         if (this.active_draggable_name == null) return;
         this.try_move_draggable_to_container(this.active_draggable_name, container_name);
 
         this.active_draggable_name = null;
         this.reset_picked_class();
     }
-    
-    private get_container_outer_g(container_name : string) : SVGGElement {
+
+    private get_container_outer_g(container_name: string): SVGGElement {
         const container_data = this.containers[container_name];
         return container_data?.svgelement?.parentNode as SVGGElement;
     }
 
-    private add_container_svg(name : string, diagram: Diagram, outer_g: SVGGElement) {
+    private add_container_svg(name: string, diagram: Diagram, outer_g: SVGGElement) {
         let g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-        f_draw_to_svg(this.dnd_svg, g, diagram.position(V2(0,0)), 
+        f_draw_to_svg(this.dnd_svg, g, diagram.position(V2(0, 0)),
             false, false, calculate_text_scale(this.diagram_svg), this.global_scale_factor, dnd_type.container);
         const s = this.global_scale_factor;
         let position = diagram.origin;
         g.setAttribute("transform", `translate(${position.x * s},${-position.y * s})`)
         g.setAttribute("class", dnd_type.container);
         g.setAttribute("tabindex", "0");
-        
+
         g.onmousedown = (e) => {
             e.preventDefault();
         }
         this.register_tap_enter(g, () => {
             this.tap_enter_container(name);
         });
-        
+
         outer_g.prepend(g);
         this.containers[name].svgelement = g;
         this.dom_to_id_map.set(g, name);
-        
+
         this.add_focus_rect(g, diagram)
     }
-    
-    private add_draggable_svg(name : string, diagram : Diagram, outer_g : SVGGElement) {
+
+    private add_draggable_svg(name: string, diagram: Diagram, outer_g: SVGGElement) {
         let g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-        f_draw_to_svg(this.dnd_svg, g, diagram.position(V2(0,0)), true, false, calculate_text_scale(this.diagram_svg), this.global_scale_factor, dnd_type.draggable);
+        f_draw_to_svg(this.dnd_svg, g, diagram.position(V2(0, 0)), true, false, calculate_text_scale(this.diagram_svg), this.global_scale_factor, dnd_type.draggable);
         const s = this.global_scale_factor;
         let position = diagram.origin;
         g.setAttribute("transform", `translate(${position.x * s},${-position.y * s})`)
@@ -1533,13 +1531,13 @@ class DragAndDropHandler {
         this.dom_to_id_map.set(g, name);
         this.add_focus_rect(g, diagram)
     }
-    
-    private add_focus_rect(g: SVGGElement, diagram : Diagram) {
-        const bbox = diagram.position(V2(0,0)).bounding_box();
+
+    private add_focus_rect(g: SVGGElement, diagram: Diagram) {
+        const bbox = diagram.position(V2(0, 0)).bounding_box();
         const pad = this.focus_padding;
         const s = this.global_scale_factor;
-        const width = bbox[1].x - bbox[0].x + 2*pad;
-        const height = bbox[1].y - bbox[0].y + 2*pad;
+        const width = bbox[1].x - bbox[0].x + 2 * pad;
+        const height = bbox[1].y - bbox[0].y + 2 * pad;
         // focus rect svg element
         const focus_rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
         focus_rect.setAttribute("width", (width * s).toString());
@@ -1553,16 +1551,16 @@ class DragAndDropHandler {
         focus_rect.setAttribute("class", FOCUS_RECT_CLASSNAME);
         g.appendChild(focus_rect);
     }
-    
-    private move_svg_draggable_to_container(draggable_name : string, container_name : string){
+
+    private move_svg_draggable_to_container(draggable_name: string, container_name: string) {
         const draggable_svg = this.draggables[draggable_name]?.svgelement;
         if (draggable_svg == undefined) return;
         const container_outer_g = this.get_container_outer_g(container_name);
         if (container_outer_g == undefined) return;
         container_outer_g.appendChild(draggable_svg);
     }
-    
-    private reorder_svg_container_content(container_name : string){
+
+    private reorder_svg_container_content(container_name: string) {
         const content = this.containers[container_name]?.content;
         const g = this.get_container_outer_g(container_name);
         if (content == undefined || g == undefined) return;
@@ -1572,14 +1570,14 @@ class DragAndDropHandler {
             g.appendChild(draggable_svg)
         }
     }
-    
-    private reconfigure_container_tabindex(container_name : string) {
+
+    private reconfigure_container_tabindex(container_name: string) {
         const container = this.containers[container_name];
         if (container == undefined) return;
         if (container.capacity == 1) {
             if (container.content.length == 1) {
                 container.svgelement?.setAttribute("tabindex", "-1")
-                if (container.svgelement == document.activeElement){
+                if (container.svgelement == document.activeElement) {
                     // set the focus to the content
                     const content = container.content[0];
                     this.draggables[content]?.svgelement?.focus();
@@ -1589,8 +1587,8 @@ class DragAndDropHandler {
             }
         }
     }
-    
-    public reorder_svg_container_tabindex(container_names: string[]){
+
+    public reorder_svg_container_tabindex(container_names: string[]) {
         for (let container_name of container_names) {
             const g = this.get_container_outer_g(container_name);
             if (g == undefined) continue;
@@ -1598,11 +1596,11 @@ class DragAndDropHandler {
         }
     }
 
-    reposition_container_content(container_name : string){
+    reposition_container_content(container_name: string) {
         let container = this.containers[container_name];
         if (container == undefined) return;
-        
-        if (this.sort_content){
+
+        if (this.sort_content) {
             container.content.sort()
             this.reorder_svg_container_content(container_name)
         } else if (container.config?.sorting_function) {
@@ -1621,11 +1619,11 @@ class DragAndDropHandler {
             draggable.svgelement?.setAttribute("transform", `translate(${pos.x * s},${-pos.y * s})`);
         }
     }
-    remove_draggable_from_container(draggable_name : string, container_name : string) {
-        this.containers[container_name].content = 
+    remove_draggable_from_container(draggable_name: string, container_name: string) {
+        this.containers[container_name].content =
             this.containers[container_name].content.filter((name) => name != draggable_name);
     }
-    private move_draggable_to_container(draggable_name : string, container_name : string, ignore_callback = false) {
+    private move_draggable_to_container(draggable_name: string, container_name: string, ignore_callback = false) {
         let draggable = this.draggables[draggable_name];
         if (draggable == undefined) return;
 
@@ -1650,7 +1648,7 @@ class DragAndDropHandler {
         this.callbacks[draggedElement.name](draggedElement.position);
     }
 
-    try_move_draggable_to_container(draggable_name : string, container_name : string, ignore_callback = false) {
+    try_move_draggable_to_container(draggable_name: string, container_name: string, ignore_callback = false) {
         if (this.move_validation_function) {
             const valid = this.move_validation_function(draggable_name, container_name);
             if (!valid) return;
@@ -1659,7 +1657,7 @@ class DragAndDropHandler {
         let container = this.containers[container_name];
         if (container.content.length + 1 <= container.capacity) {
             this.move_draggable_to_container(draggable_name, container_name, ignore_callback);
-        } else if (container.capacity == 1){
+        } else if (container.capacity == 1) {
             // only swap if the container has only 1 capacity
             // swap
             let original_container_name = draggable.container;
@@ -1669,7 +1667,7 @@ class DragAndDropHandler {
         }
     }
 
-    startDrag(evt : DnDEvent) {
+    startDrag(evt: DnDEvent) {
         if (evt instanceof MouseEvent) { evt.preventDefault(); }
         if (window.TouchEvent && evt instanceof TouchEvent) { evt.preventDefault(); }
         this.hoveredContainerName = null;
@@ -1679,7 +1677,7 @@ class DragAndDropHandler {
         // delete orphaned ghost
         let ghosts = this.dnd_svg.getElementsByClassName(dnd_type.ghost);
         for (let i = 0; i < ghosts.length; i++) ghosts[i].remove();
-        
+
         // create a clone of the dragged element
         if (this.draggedElementName == null) return;
         let draggable = this.draggables[this.draggedElementName];
@@ -1694,9 +1692,9 @@ class DragAndDropHandler {
         this.dnd_svg.append(this.draggedElementGhost);
     }
 
-    get_dnd_element_data_from_evt(evt : DnDEvent) : {name : string, type : string} | null {
-        let element : HTMLElement | null = null;
-        if (window.TouchEvent && evt instanceof TouchEvent) { 
+    get_dnd_element_data_from_evt(evt: DnDEvent): { name: string, type: string } | null {
+        let element: HTMLElement | null = null;
+        if (window.TouchEvent && evt instanceof TouchEvent) {
             let evt_touch = evt.touches[0];
             element = document.elementFromPoint(evt_touch.clientX, evt_touch.clientY) as HTMLElement;
         } else {
@@ -1707,23 +1705,23 @@ class DragAndDropHandler {
 
         if (element.localName == "tspan") element = element.parentElement;
         if (element == null) return null;
-        
+
         let dg_tag = element.getAttribute("_dg_tag"); if (dg_tag == null) return null;
 
         if (dg_tag == dnd_type.container) {
             let parent = element.parentElement; if (parent == null) return null;
             let name = this.dom_to_id_map.get(parent); if (name == null) return null;
-            return {name, type : dnd_type.container};
+            return { name, type: dnd_type.container };
         }
         if (dg_tag == dnd_type.draggable) {
             let parent = element.parentElement; if (parent == null) return null;
-            let name = this.dom_to_id_map.get(parent);  if (name == null) return null;
-            return {name, type : dnd_type.draggable};
+            let name = this.dom_to_id_map.get(parent); if (name == null) return null;
+            return { name, type: dnd_type.draggable };
         }
         return null;
     }
 
-    drag(evt : DnDEvent) {
+    drag(evt: DnDEvent) {
         if (this.draggedElementName == null) return;
         if (this.draggedElementGhost == null) return;
         if (evt instanceof MouseEvent) { evt.preventDefault(); }
@@ -1745,14 +1743,14 @@ class DragAndDropHandler {
         this.draggedElementGhost.setAttribute("transform", `translate(${coord.x},${-coord.y})`);
     }
 
-    endDrag(_evt : DnDEvent) {
-        if (this.hoveredContainerName != null && this.draggedElementName != null){
+    endDrag(_evt: DnDEvent) {
+        if (this.hoveredContainerName != null && this.draggedElementName != null) {
             this.try_move_draggable_to_container(this.draggedElementName, this.hoveredContainerName);
         }
 
         // if dropped outside of any container
-        if (this.hoveredContainerName == null && this.draggedElementName != null 
-            && this.dropped_outside_callback != null){
+        if (this.hoveredContainerName == null && this.draggedElementName != null
+            && this.dropped_outside_callback != null) {
             this.dropped_outside_callback(this.draggedElementName);
         }
 
@@ -1761,13 +1759,13 @@ class DragAndDropHandler {
         this.reset_hovered_class();
         this.reset_picked_class();
 
-        if (this.draggedElementGhost != null){
+        if (this.draggedElementGhost != null) {
             this.draggedElementGhost.remove();
             this.draggedElementGhost = null;
         }
     }
 
-    reset_hovered_class(){
+    reset_hovered_class() {
         for (let name in this.containers) {
             this.containers[name].svgelement?.classList.remove("hovered");
         }
@@ -1776,7 +1774,7 @@ class DragAndDropHandler {
         }
     }
 
-    reset_picked_class(){
+    reset_picked_class() {
         for (let name in this.draggables) {
             this.draggables[name].svgelement?.classList.remove("picked");
         }
@@ -1785,15 +1783,15 @@ class DragAndDropHandler {
 
 class ButtonHandler {
     // callbacks : {[key : string] : (state : boolean) => any} = {};
-    states : {[key : string] : boolean} = {};
-    svg_g_element : {[key : string] : SVGGElement|undefined} = {};
-    touchdownName : string | null = null;
+    states: { [key: string]: boolean } = {};
+    svg_g_element: { [key: string]: SVGGElement | undefined } = {};
+    touchdownName: string | null = null;
     focus_padding: number = 1;
 
-    constructor(public button_svg : SVGSVGElement, public diagram_svg : SVGSVGElement, public global_scale_factor : number){
+    constructor(public button_svg: SVGSVGElement, public diagram_svg: SVGSVGElement, public global_scale_factor: number) {
     }
-    
-    remove(name : string){
+
+    remove(name: string) {
         delete this.states[name];
         const g = this.svg_g_element[name];
         g?.remove();
@@ -1801,7 +1799,7 @@ class ButtonHandler {
     }
 
     /** add a new toggle button if it doesn't exist, otherwise, update diagrams and callback */
-    try_add_toggle(name : string, diagram_on : Diagram, diagram_off : Diagram, state : boolean, callback : (state : boolean, redraw? : boolean) => any) : setter_function_t {
+    try_add_toggle(name: string, diagram_on: Diagram, diagram_off: Diagram, state: boolean, callback: (state: boolean, redraw?: boolean) => any): setter_function_t {
         let g = this.svg_g_element[name];
         if (g) {
             g.innerHTML = "";
@@ -1813,9 +1811,9 @@ class ButtonHandler {
     }
 
     private add_toggle(
-        name : string, diagram_on : Diagram, diagram_off : Diagram, state : boolean,
-        g : SVGGElement, callback : (state : boolean, redraw? : boolean) => any
-    ) : setter_function_t {
+        name: string, diagram_on: Diagram, diagram_off: Diagram, state: boolean,
+        g: SVGGElement, callback: (state: boolean, redraw?: boolean) => any
+    ): setter_function_t {
         let g_off = document.createElementNS("http://www.w3.org/2000/svg", "g");
         f_draw_to_svg(this.button_svg, g_off, diagram_off, true, false, calculate_text_scale(this.diagram_svg), this.global_scale_factor);
         g_off.setAttribute("overflow", "visible");
@@ -1830,22 +1828,22 @@ class ButtonHandler {
         g.setAttribute("tabindex", "0");
         g.appendChild(g_on)
         g.appendChild(g_off)
-        
+
         this.svg_g_element[name] = g;
         this.states[name] = state;
 
-        const set_display = (state : boolean) => {
+        const set_display = (state: boolean) => {
             g_on.setAttribute("display", state ? "block" : "none");
             g_off.setAttribute("display", state ? "none" : "block");
         }
         set_display(this.states[name]);
 
-        const update_state = (state : boolean, redraw : boolean = true) => {
+        const update_state = (state: boolean, redraw: boolean = true) => {
             this.states[name] = state;
             callback(this.states[name], redraw);
             set_display(this.states[name]);
         }
-        
+
         g.onmousedown = (e) => {
             e.preventDefault();
         }
@@ -1856,15 +1854,15 @@ class ButtonHandler {
         g.onkeydown = (e) => {
             if (e.key == "Enter") update_state(!this.states[name]);
         }
-        const setter = (state : boolean) => { update_state(state, false); }
+        const setter = (state: boolean) => { update_state(state, false); }
         return setter;
     }
 
     /** add a new click button if it doesn't exist, otherwise, update diagrams and callback */
     try_add_click(
-        name : string, diagram : Diagram, diagram_pressed : Diagram, diagram_hover : Diagram,
-        callback : () => any
-    ){
+        name: string, diagram: Diagram, diagram_pressed: Diagram, diagram_hover: Diagram,
+        callback: () => any
+    ) {
         let g = this.svg_g_element[name];
         if (g) {
             g.innerHTML = "";
@@ -1876,9 +1874,9 @@ class ButtonHandler {
     }
 
     private add_click(
-        name : string, diagram : Diagram, diagram_pressed : Diagram, diagram_hover : Diagram, 
-        g : SVGGElement, callback : () => any
-    ){
+        name: string, diagram: Diagram, diagram_pressed: Diagram, diagram_hover: Diagram,
+        g: SVGGElement, callback: () => any
+    ) {
         let g_normal = document.createElementNS("http://www.w3.org/2000/svg", "g");
         f_draw_to_svg(this.button_svg, g_normal, diagram, true, false, calculate_text_scale(this.diagram_svg), this.global_scale_factor);
         g_normal.setAttribute("overflow", "visible");
@@ -1888,12 +1886,12 @@ class ButtonHandler {
         f_draw_to_svg(this.button_svg, g_pressed, diagram_pressed, true, false, calculate_text_scale(this.diagram_svg), this.global_scale_factor);
         g_pressed.setAttribute("overflow", "visible");
         g_pressed.style.cursor = "pointer";
-        
+
         let g_hover = document.createElementNS("http://www.w3.org/2000/svg", "g");
         f_draw_to_svg(this.button_svg, g_hover, diagram_hover, true, false, calculate_text_scale(this.diagram_svg), this.global_scale_factor);
         g_hover.setAttribute("overflow", "visible");
         g_hover.style.cursor = "pointer";
-        
+
         g.setAttribute("class", FOCUS_NO_OUTLINE_CLASSNAME)
         g.setAttribute("overflow", "visible");
         g.setAttribute("tabindex", "0");
@@ -1904,7 +1902,7 @@ class ButtonHandler {
 
         this.svg_g_element[name] = g;
 
-        const set_display = (pressed : boolean, hovered : boolean) => {
+        const set_display = (pressed: boolean, hovered: boolean) => {
             g_normal.setAttribute("display", !pressed && !hovered ? "block" : "none");
             g_pressed.setAttribute("display", pressed ? "block" : "none");
             g_hover.setAttribute("display", hovered && !pressed ? "block" : "none");
@@ -1912,7 +1910,7 @@ class ButtonHandler {
         set_display(false, false);
         let pressed_state = false;
         let hover_state = false;
-        
+
         const update_display = () => {
             set_display(pressed_state, hover_state);
         }
@@ -1958,12 +1956,12 @@ class ButtonHandler {
             update_display();
         }
     }
-    
-    add_focus_rect(g: SVGGElement, diagram : Diagram) {
+
+    add_focus_rect(g: SVGGElement, diagram: Diagram) {
         const bbox = diagram.bounding_box();
         const pad = this.focus_padding;
-        const width = bbox[1].x - bbox[0].x + 2*pad;
-        const height = bbox[1].y - bbox[0].y + 2*pad;
+        const width = bbox[1].x - bbox[0].x + 2 * pad;
+        const height = bbox[1].y - bbox[0].y + 2 * pad;
         // focus rect svg element
         const focus_rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
         focus_rect.setAttribute("width", width.toString());
@@ -1977,5 +1975,5 @@ class ButtonHandler {
         focus_rect.setAttribute("class", FOCUS_RECT_CLASSNAME);
         g.appendChild(focus_rect);
     }
-        
+
 }
