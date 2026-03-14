@@ -15,7 +15,7 @@ export {
 export * as utils from './utils.js'
 
 export {
-    draw_to_svg, download_svg_as_svg, download_svg_as_png, 
+    draw_to_svg, download_svg_as_svg, download_svg_as_png,
     draw_to_svg_element, draw_to_svg_options,
     get_tagged_svg_element,
     handle_tex_in_svg,

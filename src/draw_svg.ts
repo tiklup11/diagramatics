@@ -752,6 +752,7 @@ export function draw_to_svg_element(outer_svgelement: SVGSVGElement, diagram: Di
     }
 }
 
+
 function handle_filter_strings(svgelement: SVGSVGElement, filter_strings?: string[]): void {
     if (filter_strings == undefined || filter_strings.length == 0) return;
 

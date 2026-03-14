@@ -22,7 +22,7 @@ const SPHERE_SVG =
 /**
  * Create a 3D-like glossy sphere using the hand-crafted SVG design:
  * base colour #70b5f9, upper-left highlight #aad4ff, lower-right shadow #005fbf.
- * The rendered pixel size is controlled by the caller (e.g. via draw_sized).
+ * The rendered pixel size is controlled by the caller via the container or draw().
  * @returns a Diagram object
  */
 export function glossy_circle(): Diagram {
