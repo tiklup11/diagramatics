@@ -1080,15 +1080,16 @@ class LocatorHandler {
         g.style.cursor = "pointer";
 
         const s = this.global_scale_factor;
-        const thumbR = 3 / s;    // fixed ~14px diameter
+        const thumbR = 3 / s;
         const strokeW = 2.5 / s;
 
         // Visual group — CSS scale transition for press animation
         let visualGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        visualGroup.setAttribute("overflow", "visible");
         visualGroup.style.transition = 'transform 150ms, filter 150ms';
         visualGroup.style.transformBox = 'fill-box';
         visualGroup.style.transformOrigin = 'center';
-        visualGroup.style.filter = 'drop-shadow(0px 2px 6px rgba(0,0,0,0.2))';
+        visualGroup.style.filter = 'drop-shadow(0px 0px 8px rgba(0,0,0,0.4))';
 
         let thumb = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         thumb.setAttribute("r", thumbR.toString());
@@ -1108,11 +1109,11 @@ class LocatorHandler {
         // Press animation
         const pressStart = () => {
             visualGroup.style.transform = 'scale(1.33)';
-            visualGroup.style.filter = 'drop-shadow(0px 4px 12px rgba(0,0,0,0.3))';
+            visualGroup.style.filter = 'drop-shadow(0px 0px 6px rgba(0,0,0,0.55))';
         };
         const pressEnd = () => {
             visualGroup.style.transform = '';
-            visualGroup.style.filter = 'drop-shadow(0px 2px 6px rgba(0,0,0,0.2))';
+            visualGroup.style.filter = 'drop-shadow(0px 0px 8px rgba(0,0,0,0.4))';
         };
         g.addEventListener('mousedown', () => {
             pressStart();
