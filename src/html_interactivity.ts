@@ -847,6 +847,23 @@ function create_slider(callback : (val : number) => any, min : number = 0, max :
     }
     // add class to slider
     slider.classList.add("diagramatics-slider");
+
+    const onPressStart = () => {
+        slider.style.setProperty('--thumb-size', '32px');
+        slider.style.setProperty('--thumb-bg', '#374151');
+        slider.style.setProperty('--thumb-shadow', '0 4px 12px rgba(0,0,0,0.3)');
+    };
+    const onPressEnd = () => {
+        slider.style.setProperty('--thumb-size', '24px');
+        slider.style.setProperty('--thumb-bg', '#111827');
+        slider.style.setProperty('--thumb-shadow', '0 2px 6px rgba(0,0,0,0.2)');
+    };
+    slider.addEventListener('mousedown',  onPressStart);
+    slider.addEventListener('mouseup',    onPressEnd);
+    slider.addEventListener('mouseleave', onPressEnd);
+    slider.addEventListener('touchstart', onPressStart, { passive: true });
+    slider.addEventListener('touchend',   onPressEnd);
+
     return slider;
 }
 

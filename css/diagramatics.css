@@ -16,7 +16,7 @@
   width:  30px;
   height: 30px;
   border-radius: 50%;
-  background-color: #1f77b4;
+  background-color: #111827;
   border: none;
   color: white;
   padding: 0 0px;
@@ -43,7 +43,7 @@
   translate: 0 0;
 }
 .diagramatics-slider-playbutton:hover {
-  background-color: #1f77b450;
+  background-color: #37415180;
 }
 
 .diagramatics-label {
@@ -52,48 +52,40 @@
 }
 
 .diagramatics-slider {
-  -webkit-appearance: none;  /* Override default CSS styles */
+  -webkit-appearance: none;
   appearance: none;
-  /* width: 100%; /* Full-width */ 
-
-  /* creating a custom design */
   width: 200px;
-  cursor: pointer;
+  height: 8px;
+  border-radius: 9999px;
+  background: #d1d5db;
   outline: none;
-  border-radius: 15px;
-  
-  /* New additions */
-  height: 5px;
+  cursor: grab;
   margin-bottom: 12.5px;
-  background: #ccc;
-  /* background: linear-gradient(to right, #1f77b4 0%, #1f77b4 90%, #0000 90%, #0000 100%); */
-  /* create a backround color that has padding of 5px on both side */
-  /* background: linear-gradient(to right,#0000 0px, $0000 5px, #1f77b4 5px, #1f77b4 90%, #0000 90%, #0000 100%); */
 }
+.diagramatics-slider:active { cursor: grabbing; }
 
 /* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
 .diagramatics-slider::-webkit-slider-thumb {
-    /* removing default appearance */
-    -webkit-appearance: none;
-    appearance: none; 
-    cursor: pointer;
-
-    width:5px;
-    height:5px;
-    border-radius:50%;
-    background-color:#1f77b4;
-    /* clip-path:circle(50% at 50% 50%); */
-    background-clip:padding-box;
-    padding:5px;
-    border:10px solid #1f77b450;
+  -webkit-appearance: none;
+  appearance: none;
+  width: var(--thumb-size, 24px);
+  height: var(--thumb-size, 24px);
+  border-radius: 50%;
+  background: var(--thumb-bg, #111827);
+  border: 4px solid white;
+  box-shadow: var(--thumb-shadow, 0 2px 6px rgba(0,0,0,0.2));
+  transition: all 150ms;
+  cursor: inherit;
 }
 /* Thumb: Firefox */
 .diagramatics-slider::-moz-range-thumb {
-  height: 15px;
-  width: 15px;
-  background-color: #1f77b4;
+  width: var(--thumb-size, 24px);
+  height: var(--thumb-size, 24px);
   border-radius: 50%;
-  border: none;
+  background: var(--thumb-bg, #111827);
+  border: 4px solid white;
+  box-shadow: var(--thumb-shadow, 0 2px 6px rgba(0,0,0,0.2));
+  transition: all 150ms;
 }
 
 
