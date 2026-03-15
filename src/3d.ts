@@ -1,5 +1,6 @@
-import { Diagram, polygon, diagram_combine } from './diagram.js';
+import { Diagram, polygon, line, text, diagram_combine } from './diagram.js';
 import { Vector2, V2 } from './vector.js';
+import { circle, arrow1, regular_polygon } from './shapes.js';
 
 // ── Vector3 ──────────────────────────────────────────────────────────────
 
@@ -346,4 +347,118 @@ export function face_normal(f: Face): Vector3 {
     const a = f.corners[1].sub(f.corners[0]);
     const b = f.corners[2].sub(f.corners[0]);
     return a.cross(b).normalize();
+}
+
+// ── DepthElement (for mixed scenes) ─────────────────────────────────────
+
+/** A depth-tagged diagram element for scene composition */
+export interface DepthElement {
+    depth: number;
+    diagram: Diagram;
+}
+
+/** Project a 3D point to a filled circle */
+export function project_point(
+    pos: Vector3, radius: number, proj: Projection,
+    style?: { fill?: string; stroke?: string; strokewidth?: number },
+): DepthElement {
+    const p = proj.project(pos);
+    let d = regular_polygon(8, radius).position(p);
+    if (style?.fill != null) d = d.fill(style.fill);
+    if (style?.stroke != null) d = d.stroke(style.stroke);
+    if (style?.strokewidth != null) d = d.strokewidth(style.strokewidth);
+    return { depth: proj.depth(pos), diagram: d };
+}
+
+/** Project a 3D line segment */
+export function project_line(
+    from: Vector3, to: Vector3, proj: Projection,
+    style?: { stroke?: string; strokewidth?: number; opacity?: number },
+): DepthElement {
+    const p0 = proj.project(from), p1 = proj.project(to);
+    let d = line(p0, p1);
+    if (style?.stroke != null) d = d.stroke(style.stroke);
+    if (style?.strokewidth != null) d = d.strokewidth(style.strokewidth);
+    if (style?.opacity != null) d = d.opacity(style.opacity);
+    const midDepth = (proj.depth(from) + proj.depth(to)) / 2;
+    return { depth: midDepth, diagram: d };
+}
+
+/** Project a 3D arrow (line with arrowhead) */
+export function project_arrow(
+    from: Vector3, to: Vector3, proj: Projection,
+    headsize?: number,
+    style?: { stroke?: string; strokewidth?: number; opacity?: number },
+): DepthElement {
+    const p0 = proj.project(from), p1 = proj.project(to);
+    let d = arrow1(p0, p1, headsize ?? 0.5);
+    if (style?.stroke != null) d = d.stroke(style.stroke);
+    if (style?.strokewidth != null) d = d.strokewidth(style.strokewidth);
+    if (style?.opacity != null) d = d.opacity(style.opacity);
+    const midDepth = (proj.depth(from) + proj.depth(to)) / 2;
+    return { depth: midDepth, diagram: d };
+}
+
+/** Project a text label at a 3D position */
+export function project_text(
+    pos: Vector3, str: string, proj: Projection,
+    style?: { fontsize?: number; fill?: string; fontweight?: 'normal' | 'bold' | 'bolder' | 'lighter' },
+): DepthElement {
+    const p = proj.project(pos);
+    let d = text(str).position(p);
+    if (style?.fontsize != null) d = d.fontsize(style.fontsize);
+    if (style?.fill != null) d = d.textfill(style.fill);
+    if (style?.fontweight != null) d = d.fontweight(style.fontweight);
+    return { depth: proj.depth(pos), diagram: d };
+}
+
+/** Convert Shape3D faces into DepthElements for mixing with other elements */
+export function shape_to_elements(shape: Shape3D, proj: Projection): DepthElement[] {
+    return shape.faces.map(f => ({
+        depth: face_centroid_depth(f, proj),
+        diagram: project_face(f, proj),
+    }));
+}
+
+/** Sort and combine depth elements into a single Diagram (painter's algorithm) */
+export function render_scene(elements: DepthElement[]): Diagram {
+    const sorted = [...elements].sort((a, b) => b.depth - a.depth);
+    if (sorted.length === 0) return polygon([]);
+    return diagram_combine(...sorted.map(s => s.diagram));
+}
+
+/** Create 3 axis arrows with labels */
+export function axes3d(
+    length: number, proj: Projection,
+    opts?: {
+        labels?: [string, string, string];
+        labelOffset?: number;
+        headsize?: number;
+        stroke?: string;
+        strokewidth?: number;
+        fontsize?: number;
+    },
+): DepthElement[] {
+    const lbl = opts?.labels ?? ['X', 'Y', 'Z'];
+    const off = opts?.labelOffset ?? (length * 0.12);
+    const hs = opts?.headsize ?? (length * 0.06);
+    const st = opts?.stroke ?? '#888888';
+    const sw = opts?.strokewidth ?? 1.5;
+    const fs = opts?.fontsize ?? 16;
+    const origin = V3(0, 0, 0);
+    const axes: [Vector3, Vector3, string][] = [
+        [V3(-length, 0, 0), V3(length, 0, 0), lbl[0]],
+        [V3(0, -length, 0), V3(0, length, 0), lbl[1]],
+        [V3(0, 0, -length), V3(0, 0, length), lbl[2]],
+    ];
+    const elements: DepthElement[] = [];
+    for (const [from, to, label] of axes) {
+        elements.push(project_arrow(from, to, proj, hs, { stroke: st, strokewidth: sw }));
+        // label near the positive tip
+        const tipDir = to.sub(origin).normalize();
+        elements.push(project_text(to.add(tipDir.scale(off)), label, proj, {
+            fontsize: fs, fill: '#666666',
+        }));
+    }
+    return elements;
 }
