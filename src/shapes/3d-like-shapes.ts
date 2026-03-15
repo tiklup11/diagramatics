@@ -1,9 +1,9 @@
 import { Diagram, image } from '../diagram.js';
-
+// THIS IS AN EXAMPLE to test svg rendering
 // Extracted from the original hand-crafted SVG design.
-// Circle center: (338.33, 209.33), radius: 66.61 — viewBox crops to that region.
+// Circle center: (338.33, 209.33), radius: 66.61 — viewBox centered on circle with 1-unit margin.
 const SPHERE_SVG =
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="269 140 134 134" width="134" height="134">` +
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="270.72 141.72 135.22 135.22" width="135" height="135">` +
     `<defs>` +
     `<clipPath id="sp">` +
     `<circle cx="338.33335" cy="209.33333" r="66.61081"/>` +
