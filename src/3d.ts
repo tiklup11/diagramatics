@@ -1,11 +1,11 @@
 import { Diagram, polygon, line, text, diagram_combine } from './diagram.js';
 import { Vector2, V2 } from './vector.js';
-import { circle, arrow1, regular_polygon } from './shapes.js';
+import { arrow1, regular_polygon } from './shapes.js';
 
 // ── Vector3 ──────────────────────────────────────────────────────────────
 
 export class Vector3 {
-    constructor(public x: number, public y: number, public z: number) {}
+    constructor(public x: number, public y: number, public z: number) { }
     add(v: Vector3): Vector3 {
         return new Vector3(this.x + v.x, this.y + v.y, this.z + v.z);
     }
