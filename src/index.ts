@@ -76,6 +76,7 @@ export * as geo_construct from './geo_construct/geo_construct.js'
 export * as tree from './shapes/shapes_tree.js'
 export * as curves from './shapes/shapes_curves.js'
 export * as shapes3d from './shapes/3d-like-shapes.js'
+export * as pseudo3d from './3d.js'
 
 // Mics
 export * as encoding from './encoding.js'
