@@ -920,7 +920,6 @@ export function clientPos_to_svgPos(clientPos: { x: number, y: number }, svgelem
     } else {
         CTM = svgelem.getScreenCTM() as DOMMatrix;
     }
-    // console.log(CTM);
 
     return {
         x: (clientPos.x - CTM.e) / CTM.a,
