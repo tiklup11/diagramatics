@@ -1,9 +1,9 @@
-export { 
-    Diagram, Path, polygon, line, curve, empty, text, image, multiline, multiline_bb, foreign_object, diagram_combine,
+export {
+    Diagram, Path, polygon, line, linea, curve, empty, text, image, multiline, multiline_bb, foreign_object, diagram_combine,
 } from './diagram.js';
 
-export { 
-    Vector2, V2, Vdir, 
+export {
+    Vector2, V2, Vdir,
 } from './vector.js';
 
 export {
@@ -24,16 +24,16 @@ export {
     reset_default_styles,
 } from './draw_svg.js';
 
-export { 
+export {
     rectangle, square, regular_polygon, regular_polygon_side,
-    circle, arc, 
+    circle, arc,
     arrow, arrow1, arrow2, textvar, rectangle_corner,
 } from './shapes.js'
 
 export {
     align_vertical, align_horizontal,
     distribute_horizontal, distribute_vertical,
-    distribute_horizontal_and_align, distribute_vertical_and_align, 
+    distribute_horizontal_and_align, distribute_vertical_and_align,
     distribute_grid_row, distribute_variable_row,
 } from './alignment.js'
 
@@ -52,7 +52,7 @@ export * as boolean from './boolean.js'
 export * as filter from './filter.js'
 
 // Extra Shapes
-export { 
+export {
     axes_transform, ax, axes_empty, axes_corner_empty,
     xtickmark_empty, xtickmark, xticks,
     ytickmark_empty, ytickmark, yticks,
