@@ -45,7 +45,9 @@ export {
     Interactive,
     get_SVGPos_from_event,
     clientPos_to_svgPos,
+    compute_intersections,
 } from './html_interactivity.js'
+export type { LocatorStyle, SnapConfig } from './html_interactivity.js'
 
 export * as mod from './modifier.js'
 export * as boolean from './boolean.js'

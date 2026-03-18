@@ -27,6 +27,17 @@ type setter_function_t = (_: any) => void;
 type inpVariables_t = { [key: string]: any };
 type inpSetter_t = { [key: string]: setter_function_t };
 
+export type LocatorStyle = {
+    color?: string,
+    stroke?: string,
+    stroke_width?: number,
+}
+
+export type SnapConfig = {
+    points: Vector2[],
+    threshold?: number,
+}
+
 enum control_svg_name {
     locator = "control_svg",
     dnd = "dnd_svg",
@@ -233,6 +244,8 @@ export class Interactive {
         variable_name: string, value: Vector2, radius: number, color: string = 'blue',
         track_diagram?: Diagram, blink: boolean = true,
         callback?: (locator_name: string, position: Vector2) => any,
+        style?: LocatorStyle,
+        snap_config?: SnapConfig,
     ) {
         if (this.diagram_outer_svg == undefined) throw Error("diagram_outer_svg in Interactive class is undefined");
         this.inp_variables[variable_name] = value;
@@ -263,7 +276,7 @@ export class Interactive {
 
         // ============== Circle element
 
-        let locator_svg = this.locatorHandler.create_locator_circle_pointer_svg(variable_name, radius, value, color, blink);
+        let locator_svg = this.locatorHandler.create_locator_circle_pointer_svg(variable_name, radius, value, color, blink, style);
         if (blink) {
             // store the circle_outer into the LocatorHandler so that we can turn it off later
             let blinking_outers = locator_svg.getElementsByClassName("diagramatics-locator-blink");
@@ -280,10 +293,7 @@ export class Interactive {
         // =============== setter
         let setter;
         if (track_diagram) {
-            if (track_diagram.type != DiagramType.Polygon && track_diagram.type != DiagramType.Curve)
-                throw Error('Track diagram must be a polygon or curve');
-            if (track_diagram.path == undefined) throw Error(`diagram {diagtam.type} must have a path`);
-            let track = track_diagram.path.points;
+            let track = collect_points_from_diagram(track_diagram);
             setter = (pos: Vector2) => {
                 const s = this.global_scale_factor;
                 let coord = closest_point_from_points(pos, track);
@@ -300,6 +310,25 @@ export class Interactive {
         }
         this.locatorHandler.registerSetter(variable_name, setter);
         this.inp_setter[variable_name] = setter;
+
+        // =============== snap handler
+        if (snap_config && snap_config.points.length > 0) {
+            const snap_points = snap_config.points;
+            const threshold_sq = snap_config.threshold != undefined
+                ? snap_config.threshold * snap_config.threshold : Infinity;
+            this.locatorHandler.registerSnapHandler(variable_name, (pos: Vector2) => {
+                let best_d2 = threshold_sq;
+                let best_p = pos;
+                for (const sp of snap_points) {
+                    const d2 = sp.sub(pos).length_sq();
+                    if (d2 < best_d2) {
+                        best_d2 = d2;
+                        best_p = sp;
+                    }
+                }
+                return best_p;
+            });
+        }
 
         // set initial position
         let init_pos = setter(value);
@@ -323,7 +352,8 @@ export class Interactive {
         variable_name: string, value: Vector2, diagram: Diagram,
         track_diagram?: Diagram, blink: boolean = true,
         callback?: (locator_name: string, position: Vector2) => any,
-        callback_rightclick?: (locator_name: string) => any
+        callback_rightclick?: (locator_name: string) => any,
+        snap_config?: SnapConfig,
     ) {
         if (this.diagram_outer_svg == undefined) throw Error("diagram_outer_svg in Interactive class is undefined");
         this.inp_variables[variable_name] = value;
@@ -372,10 +402,7 @@ export class Interactive {
         // =============== setter
         let setter;
         if (track_diagram) {
-            if (track_diagram.type != DiagramType.Polygon && track_diagram.type != DiagramType.Curve)
-                throw Error('Track diagram must be a polygon or curve');
-            if (track_diagram.path == undefined) throw Error(`diagram {diagtam.type} must have a path`);
-            let track = track_diagram.path.points;
+            let track = collect_points_from_diagram(track_diagram);
             setter = (pos: Vector2) => {
                 let coord = closest_point_from_points(pos, track);
                 const s = this.global_scale_factor;
@@ -392,6 +419,25 @@ export class Interactive {
         }
         this.locatorHandler.registerSetter(variable_name, setter);
         this.inp_setter[variable_name] = setter;
+
+        // =============== snap handler
+        if (snap_config && snap_config.points.length > 0) {
+            const snap_points = snap_config.points;
+            const threshold_sq = snap_config.threshold != undefined
+                ? snap_config.threshold * snap_config.threshold : Infinity;
+            this.locatorHandler.registerSnapHandler(variable_name, (pos: Vector2) => {
+                let best_d2 = threshold_sq;
+                let best_p = pos;
+                for (const sp of snap_points) {
+                    const d2 = sp.sub(pos).length_sq();
+                    if (d2 < best_d2) {
+                        best_d2 = d2;
+                        best_p = sp;
+                    }
+                }
+                return best_p;
+            });
+        }
 
         // set initial position
         let init_pos = setter(value);
@@ -866,21 +912,102 @@ function create_slider(callback: (val: number) => any, min: number = 0, max: num
     return slider;
 }
 
-// function create_locator() : SVGCircleElement {
-// }
-//
+/**
+ * Recursively collect all path points from a diagram.
+ * Works for Polygon, Curve, and combined Diagram types.
+ */
+function collect_points_from_diagram(d: Diagram): Vector2[] {
+    if (d.type === DiagramType.Diagram) {
+        let points: Vector2[] = [];
+        for (let i = 0; i < d.children.length; i++) {
+            points = points.concat(collect_points_from_diagram(d.children[i]));
+        }
+        return points;
+    } else if (d.path != undefined) {
+        return d.path.points;
+    }
+    return [];
+}
+
 function closest_point_from_points(p: Vector2, points: Vector2[]): Vector2 {
     if (points.length == 0) return p;
     let closest_d2 = Infinity;
     let closest_p = points[0];
     for (let i = 0; i < points.length; i++) {
+        // check distance to this point
         let d2 = points[i].sub(p).length_sq();
         if (d2 < closest_d2) {
             closest_d2 = d2;
             closest_p = points[i];
         }
+        // check distance to the segment between this point and the next
+        if (i < points.length - 1) {
+            let a = points[i];
+            let b = points[i + 1];
+            let ab = b.sub(a);
+            let ab_len_sq = ab.length_sq();
+            if (ab_len_sq > 0) {
+                let t = p.sub(a).dot(ab) / ab_len_sq;
+                t = Math.max(0, Math.min(1, t));
+                let proj = a.add(ab.scale(t));
+                let proj_d2 = proj.sub(p).length_sq();
+                if (proj_d2 < closest_d2) {
+                    closest_d2 = proj_d2;
+                    closest_p = proj;
+                }
+            }
+        }
     }
     return closest_p;
+}
+
+function collect_polylines_from_diagram(d: Diagram): Vector2[][] {
+    if (d.type === DiagramType.Diagram) {
+        let result: Vector2[][] = [];
+        for (let i = 0; i < d.children.length; i++) {
+            result = result.concat(collect_polylines_from_diagram(d.children[i]));
+        }
+        return result;
+    } else if (d.path != undefined && d.path.points.length >= 2) {
+        return [d.path.points];
+    }
+    return [];
+}
+
+function segment_intersection(a1: Vector2, a2: Vector2, b1: Vector2, b2: Vector2): Vector2 | null {
+    const da = a2.sub(a1);
+    const db = b2.sub(b1);
+    const d = da.cross(db);
+    if (Math.abs(d) < 1e-12) return null;
+
+    const dp = b1.sub(a1);
+    const t = dp.cross(db) / d;
+    const u = dp.cross(da) / d;
+
+    if (t < 0 || t > 1 || u < 0 || u > 1) return null;
+    return a1.add(da.scale(t));
+}
+
+export function compute_intersections(...diagrams: Diagram[]): Vector2[] {
+    let polylines: Vector2[][] = [];
+    for (const diag of diagrams) {
+        polylines = polylines.concat(collect_polylines_from_diagram(diag));
+    }
+
+    const results: Vector2[] = [];
+    for (let i = 0; i < polylines.length; i++) {
+        for (let j = i + 1; j < polylines.length; j++) {
+            const pi = polylines[i];
+            const pj = polylines[j];
+            for (let si = 0; si < pi.length - 1; si++) {
+                for (let sj = 0; sj < pj.length - 1; sj++) {
+                    const p = segment_intersection(pi[si], pi[si + 1], pj[sj], pj[sj + 1]);
+                    if (p !== null) results.push(p);
+                }
+            }
+        }
+    }
+    return results;
 }
 
 // helper to calculate CTM in firefox
@@ -959,6 +1086,7 @@ class LocatorHandler {
     blinking_circle_outers: Element[] = [];
     first_touch_callback: Function | null = null;
     element_pos: { [key: string]: Vector2 } = {};
+    snap_handlers: { [key: string]: (pos: Vector2) => Vector2 } = {};
 
     constructor(public control_svg: SVGSVGElement, public diagram_svg: SVGSVGElement, public global_scale_factor: number) {
     }
@@ -1012,6 +1140,20 @@ class LocatorHandler {
         this.control_svg.setAttribute("preserveAspectRatio", this.diagram_svg.getAttribute("preserveAspectRatio") as string);
     }
     endDrag(_: LocatorEvent) {
+        if (this.selectedVariable != null) {
+            const snap = this.snap_handlers[this.selectedVariable];
+            if (snap) {
+                let pos = this.element_pos[this.selectedVariable];
+                let snapped = snap(pos);
+                if (this.setter[this.selectedVariable]) {
+                    this.setter[this.selectedVariable](snapped);
+                }
+                this.element_pos[this.selectedVariable] = snapped;
+                if (this.callbacks[this.selectedVariable]) {
+                    this.callbacks[this.selectedVariable](snapped);
+                }
+            }
+        }
         this.selectedElement = null;
         this.selectedVariable = null;
     }
@@ -1023,6 +1165,7 @@ class LocatorHandler {
         }
         delete this.callbacks[variable_name];
         delete this.setter[variable_name];
+        delete this.snap_handlers[variable_name];
         this.svg_elements[variable_name]?.remove();
         delete this.svg_elements[variable_name];
         delete this.element_pos[variable_name];
@@ -1037,6 +1180,9 @@ class LocatorHandler {
     }
     registerSetter(name: string, setter: (pos: Vector2) => any) {
         this.setter[name] = setter;
+    }
+    registerSnapHandler(name: string, handler: (pos: Vector2) => Vector2) {
+        this.snap_handlers[name] = handler;
     }
     addBlinkingCircleOuter(circle_outer: Element) {
         this.blinking_circle_outers.push(circle_outer);
@@ -1073,14 +1219,16 @@ class LocatorHandler {
         return g;
     }
 
-    create_locator_circle_pointer_svg(name: string, radius: number, value: Vector2, color: string, blink: boolean): SVGGElement {
+    create_locator_circle_pointer_svg(name: string, radius: number, value: Vector2, color: string, blink: boolean, style?: LocatorStyle): SVGGElement {
         let g = document.createElementNS("http://www.w3.org/2000/svg", "g");
         g.setAttribute("overflow", "visible");
         g.style.cursor = "pointer";
 
         const s = this.global_scale_factor;
-        const thumbR = 3 / s;
-        const strokeW = 2.5 / s;
+        const r = radius / s;
+        const fillClr = style?.color ?? '#111827';
+        const strokeClr = style?.stroke ?? 'white';
+        const strokeW = (style?.stroke_width ?? r * 0.5) / s;
 
         // Visual group — CSS scale transition for press animation
         let visualGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
@@ -1091,16 +1239,16 @@ class LocatorHandler {
         visualGroup.style.filter = 'drop-shadow(0px 0px 8px rgba(0,0,0,0.4))';
 
         let thumb = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        thumb.setAttribute("r", thumbR.toString());
-        thumb.setAttribute("fill", "#111827");
-        thumb.setAttribute("stroke", "white");
+        thumb.setAttribute("r", r.toString());
+        thumb.setAttribute("fill", fillClr);
+        thumb.setAttribute("stroke", strokeClr);
         thumb.setAttribute("stroke-width", strokeW.toString());
         visualGroup.appendChild(thumb);
         g.appendChild(visualGroup);
 
-        // Transparent hit area — same size as thumb
+        // Transparent hit area
         let hitArea = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        hitArea.setAttribute("r", (thumbR * 0.5).toString());
+        hitArea.setAttribute("r", ((r + strokeW) * 1.5).toString());
         hitArea.setAttribute("fill", "transparent");
         hitArea.setAttribute("stroke", "none");
         g.appendChild(hitArea);
