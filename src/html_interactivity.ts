@@ -242,7 +242,8 @@ export class Interactive {
      */
     public locator(
         variable_name: string, value: Vector2, radius: number, color: string = 'blue',
-        track_diagram?: Diagram, blink: boolean = true,
+        track_diagram?: Diagram, track_exclude_tags?: string[],
+        blink: boolean = true,
         callback?: (locator_name: string, position: Vector2) => any,
         style?: LocatorStyle,
         snap_config?: SnapConfig,
@@ -293,10 +294,10 @@ export class Interactive {
         // =============== setter
         let setter;
         if (track_diagram) {
-            let track = collect_points_from_diagram(track_diagram);
+            let track = collect_polylines_from_diagram(track_diagram, track_exclude_tags);
             setter = (pos: Vector2) => {
                 const s = this.global_scale_factor;
-                let coord = closest_point_from_points(pos, track);
+                let coord = closest_point_from_polylines(pos, track);
                 locator_svg.setAttribute("transform", `translate(${coord.x * s},${-coord.y * s})`)
                 return coord;
             }
@@ -350,7 +351,8 @@ export class Interactive {
      */
     public locator_custom(
         variable_name: string, value: Vector2, diagram: Diagram,
-        track_diagram?: Diagram, blink: boolean = true,
+        track_diagram?: Diagram, track_exclude_tags?: string[],
+        blink: boolean = true,
         callback?: (locator_name: string, position: Vector2) => any,
         callback_rightclick?: (locator_name: string) => any,
         snap_config?: SnapConfig,
@@ -402,9 +404,9 @@ export class Interactive {
         // =============== setter
         let setter;
         if (track_diagram) {
-            let track = collect_points_from_diagram(track_diagram);
+            let track = collect_polylines_from_diagram(track_diagram, track_exclude_tags);
             setter = (pos: Vector2) => {
-                let coord = closest_point_from_points(pos, track);
+                let coord = closest_point_from_polylines(pos, track);
                 const s = this.global_scale_factor;
                 locator_svg.setAttribute("transform", `translate(${coord.x * s},${-coord.y * s})`)
                 return coord;
@@ -916,11 +918,12 @@ function create_slider(callback: (val: number) => any, min: number = 0, max: num
  * Recursively collect all path points from a diagram.
  * Works for Polygon, Curve, and combined Diagram types.
  */
-function collect_points_from_diagram(d: Diagram): Vector2[] {
+function collect_points_from_diagram(d: Diagram, exclude_tags?: string[]): Vector2[] {
+    if (exclude_tags && Array.isArray(exclude_tags) && d.tags && d.tags.some(t => exclude_tags.includes(t))) return [];
     if (d.type === DiagramType.Diagram) {
         let points: Vector2[] = [];
         for (let i = 0; i < d.children.length; i++) {
-            points = points.concat(collect_points_from_diagram(d.children[i]));
+            points = points.concat(collect_points_from_diagram(d.children[i], exclude_tags));
         }
         return points;
     } else if (d.path != undefined) {
@@ -961,11 +964,35 @@ function closest_point_from_points(p: Vector2, points: Vector2[]): Vector2 {
     return closest_p;
 }
 
-function collect_polylines_from_diagram(d: Diagram): Vector2[][] {
+function closest_point_from_polylines(p: Vector2, polylines: Vector2[][]): Vector2 {
+    let closest_d2 = Infinity;
+    let closest_p = p;
+    for (const points of polylines) {
+        for (let i = 0; i < points.length; i++) {
+            let d2 = points[i].sub(p).length_sq();
+            if (d2 < closest_d2) { closest_d2 = d2; closest_p = points[i]; }
+            if (i < points.length - 1) {
+                let a = points[i], b = points[i + 1];
+                let ab = b.sub(a);
+                let ab_len_sq = ab.length_sq();
+                if (ab_len_sq > 0) {
+                    let t = Math.max(0, Math.min(1, p.sub(a).dot(ab) / ab_len_sq));
+                    let proj = a.add(ab.scale(t));
+                    let proj_d2 = proj.sub(p).length_sq();
+                    if (proj_d2 < closest_d2) { closest_d2 = proj_d2; closest_p = proj; }
+                }
+            }
+        }
+    }
+    return closest_p;
+}
+
+function collect_polylines_from_diagram(d: Diagram, exclude_tags?: string[]): Vector2[][] {
+    if (exclude_tags && Array.isArray(exclude_tags) && d.tags && d.tags.some(t => exclude_tags.includes(t))) return [];
     if (d.type === DiagramType.Diagram) {
         let result: Vector2[][] = [];
         for (let i = 0; i < d.children.length; i++) {
-            result = result.concat(collect_polylines_from_diagram(d.children[i]));
+            result = result.concat(collect_polylines_from_diagram(d.children[i], exclude_tags));
         }
         return result;
     } else if (d.path != undefined && d.path.points.length >= 2) {
@@ -984,8 +1011,9 @@ function segment_intersection(a1: Vector2, a2: Vector2, b1: Vector2, b2: Vector2
     const t = dp.cross(db) / d;
     const u = dp.cross(da) / d;
 
-    if (t < 0 || t > 1 || u < 0 || u > 1) return null;
-    return a1.add(da.scale(t));
+    const eps = 1e-10;
+    if (t < -eps || t > 1 + eps || u < -eps || u > 1 + eps) return null;
+    return a1.add(da.scale(Math.max(0, Math.min(1, t))));
 }
 
 export function compute_intersections(...diagrams: Diagram[]): Vector2[] {
@@ -1118,12 +1146,12 @@ class LocatorHandler {
 
         const s = this.global_scale_factor;
         let pos = V2(coord.x / s, coord.y / s).add(this.mouseOffset);
-        this.element_pos[this.selectedVariable] = pos;
         // check if setter for this.selectedVariable exists
         // if it does, call it
         if (this.setter[this.selectedVariable] != undefined) {
             pos = this.setter[this.selectedVariable](pos);
         }
+        this.element_pos[this.selectedVariable] = pos;
 
         // check if callback for this.selectedVariable exists
         // if it does, call it
