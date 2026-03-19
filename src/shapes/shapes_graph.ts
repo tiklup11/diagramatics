@@ -330,6 +330,34 @@ export function xyaxes(axes_options?: Partial<axes_options>): Diagram {
     return diagram_combine(axes_empty(opt), xticks(opt), yticks(opt));
 }
 
+export type XYAxesDecomposed = {
+    /** Combined diagram (axes + all ticks) for drawing */
+    d: Diagram,
+    /** X and Y axis lines only (no ticks) */
+    axes: Diagram,
+    /** X-axis tick marks and labels */
+    xticks: Diagram,
+    /** Y-axis tick marks and labels */
+    yticks: Diagram,
+}
+
+/**
+ * Draw xy axes with ticks, returning individual parts for selective use
+ * @param axes_options options for the axes
+ */
+export function xyaxes_decomposed(axes_options?: Partial<axes_options>): XYAxesDecomposed {
+    let opt = { ...default_axes_options, ...axes_options };
+    let axes = axes_empty(opt);
+    let xt = xticks(opt);
+    let yt = yticks(opt);
+    return {
+        d: diagram_combine(axes, xt, yt),
+        axes,
+        xticks: xt,
+        yticks: yt,
+    };
+}
+
 /**
  * Draw x axis with ticks
  * @param axes_options options for the axis

@@ -58,11 +58,12 @@ export {
     axes_transform, ax, axes_empty, axes_corner_empty,
     xtickmark_empty, xtickmark, xticks,
     ytickmark_empty, ytickmark, yticks,
-    xyaxes, xygrid, xycorneraxes,
+    xyaxes, xyaxes_decomposed, xygrid, xycorneraxes,
     xaxis, yaxis, xgrid, ygrid,
     plot, plotv, plotf, under_curvef,
     axes_options,
 } from './shapes/shapes_graph.js'
+export type { XYAxesDecomposed } from './shapes/shapes_graph.js'
 
 export { TAG } from './tag_names.js'
 
