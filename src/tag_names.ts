@@ -28,4 +28,5 @@ export enum TAG {
     GRAPH_TICK = "graph_tick",
     GRAPH_TICK_LABEL = "graph_tick_label",
     GRAPH_GRID = "graph_grid",
+    GRAPH_AXIS_LABEL = "graph_axis_label",
 }

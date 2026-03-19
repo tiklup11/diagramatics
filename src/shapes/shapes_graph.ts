@@ -20,6 +20,9 @@ export type axes_options = {
     ticksize: number,
     headsize: number,
     tick_label_offset?: number,
+    xlabel?: string,
+    ylabel?: string,
+    axis_label_offset?: number,
 }
 
 export let default_axes_options: axes_options = {
@@ -33,6 +36,9 @@ export let default_axes_options: axes_options = {
     ticksize: 0.2,
     headsize: 0.05,
     tick_label_offset: 0.07,
+    xlabel: undefined,
+    ylabel: undefined,
+    axis_label_offset: 0.3,
 }
 
 export function axes_transform(axes_options?: Partial<axes_options>): (v: Vector2) => Vector2 {
@@ -87,8 +93,27 @@ export function axes_empty(axes_options?: Partial<axes_options>): Diagram {
         ? arrow1(V2(xorigin, lowerleft.y), V2(xorigin, upperright.y), opt.headsize)
         : arrow2(V2(xorigin, lowerleft.y), V2(xorigin, upperright.y), opt.headsize)
     ).append_tags(TAG.GRAPH_AXIS);
-    return diagram_combine(xaxis, yaxis).stroke('black').fill('black');
-    // return xaxis;
+    let parts: Diagram[] = [xaxis, yaxis];
+
+    let label_offset = opt.axis_label_offset ?? 0.15;
+    if (opt.xlabel) {
+        let xlabel_d = textvar(opt.xlabel)
+            .move_origin_text("center-left")
+            .translate(V2(upperright.x + label_offset, yorigin))
+            .textfill('black')
+            .append_tags(TAG.GRAPH_AXIS_LABEL);
+        parts.push(xlabel_d);
+    }
+    if (opt.ylabel) {
+        let ylabel_d = textvar(opt.ylabel)
+            .move_origin_text("bottom-center")
+            .translate(V2(xorigin, upperright.y + label_offset))
+            .textfill('black')
+            .append_tags(TAG.GRAPH_AXIS_LABEL);
+        parts.push(ylabel_d);
+    }
+
+    return diagram_combine(...parts).stroke('black').fill('black');
 }
 
 /**
