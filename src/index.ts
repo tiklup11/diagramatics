@@ -1,5 +1,5 @@
 export {
-    Diagram, Path, polygon, line, linea, curve, empty, text, image, multiline, multiline_bb, foreign_object, diagram_combine,
+    Diagram, DiagramType, Path, polygon, line, linea, curve, empty, text, image, multiline, multiline_bb, foreign_object, diagram_combine,
 } from './diagram.js';
 
 export {
