@@ -20,6 +20,8 @@ export type axes_options = {
     ticksize: number,
     headsize: number,
     tick_label_offset?: number,
+    show_xtick_labels?: boolean,
+    show_ytick_labels?: boolean,
     xlabel?: string,
     ylabel?: string,
     axis_label_offset?: number,
@@ -36,6 +38,8 @@ export let default_axes_options: axes_options = {
     ticksize: 0.2,
     headsize: 0.05,
     tick_label_offset: 0.07,
+    show_xtick_labels: true,
+    show_ytick_labels: true,
     xlabel: undefined,
     ylabel: undefined,
     axis_label_offset: 0.3,
@@ -301,7 +305,8 @@ export function xticks(axes_options: Partial<axes_options>, y: number = 0, empty
     // opt.xticks = opt.xticks.filter(x => x >= opt.xrange[0] && x <= opt.xrange[1]);
     opt.xticks = opt.xticks.filter(x => x > opt.xrange[0] && x < opt.xrange[1]);
 
-    let xticks_diagrams = empty ?
+    let hideLabels = empty || opt.show_xtick_labels === false;
+    let xticks_diagrams = hideLabels ?
         opt.xticks.map(x => xtickmark_empty(x, y, opt)) :
         opt.xticks.map(x => xtickmark(x, y, x.toString(), opt));
     return diagram_combine(...xticks_diagrams);
@@ -316,7 +321,8 @@ export function yticks(axes_options: Partial<axes_options>, x: number = 0, empty
     // opt.yticks = opt.yticks.filter(y => y >= opt.yrange[0] && y <= opt.yrange[1]);
     opt.yticks = opt.yticks.filter(y => y > opt.yrange[0] && y < opt.yrange[1]);
 
-    let yticks_diagrams = empty ?
+    let hideLabels = empty || opt.show_ytick_labels === false;
+    let yticks_diagrams = hideLabels ?
         opt.yticks.map(y => ytickmark_empty(y, x, opt)) :
         opt.yticks.map(y => ytickmark(y, x, y.toString(), opt));
     return diagram_combine(...yticks_diagrams);

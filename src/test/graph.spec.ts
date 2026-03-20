@@ -1,4 +1,5 @@
-import { get_tick_numbers } from '../shapes/shapes_graph.js'
+import { get_tick_numbers, xticks, yticks, xyaxes_decomposed } from '../shapes/shapes_graph.js'
+import { TAG } from '../tag_names.js';
 import { expect } from 'chai';
 import 'mocha';
 
@@ -12,6 +13,23 @@ describe('Graph', () => {
             expect(get_tick_numbers(0, 5)).to.eql([0, 1, 2, 3, 4, 5]);
             // expect(get_tick_numbers(0, 15)).to.eql([ 0, 1.5, 3, 4.5, 6, 7.5, 9, 10.5, 12, 13.5, 15 ]);
             expect(get_tick_numbers(-6, 5)).to.eql([ -6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5 ]);
+        });
+
+        it('can hide tick labels on x or y independently', () => {
+            const xtNoLabels = xticks({ xrange: [0, 3], yrange: [0, 3], show_xtick_labels: false });
+            const ytNoLabels = yticks({ xrange: [0, 3], yrange: [0, 3], show_ytick_labels: false });
+            const bothShown = xyaxes_decomposed({ xrange: [0, 3], yrange: [0, 3] });
+            const xHidden = xyaxes_decomposed({ xrange: [0, 3], yrange: [0, 3], show_xtick_labels: false });
+            const yHidden = xyaxes_decomposed({ xrange: [0, 3], yrange: [0, 3], show_ytick_labels: false });
+
+            expect(xtNoLabels.get_tagged_elements(TAG.GRAPH_TICK_LABEL)).to.have.length(0);
+            expect(ytNoLabels.get_tagged_elements(TAG.GRAPH_TICK_LABEL)).to.have.length(0);
+            expect(bothShown.xticks.get_tagged_elements(TAG.GRAPH_TICK_LABEL)).to.not.have.length(0);
+            expect(bothShown.yticks.get_tagged_elements(TAG.GRAPH_TICK_LABEL)).to.not.have.length(0);
+            expect(xHidden.xticks.get_tagged_elements(TAG.GRAPH_TICK_LABEL)).to.have.length(0);
+            expect(xHidden.yticks.get_tagged_elements(TAG.GRAPH_TICK_LABEL)).to.not.have.length(0);
+            expect(yHidden.xticks.get_tagged_elements(TAG.GRAPH_TICK_LABEL)).to.not.have.length(0);
+            expect(yHidden.yticks.get_tagged_elements(TAG.GRAPH_TICK_LABEL)).to.have.length(0);
         });
     });
 
