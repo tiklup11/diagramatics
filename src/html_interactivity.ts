@@ -110,6 +110,12 @@ export class Interactive {
     public get(variable_name: string): any {
         return this.inp_variables[variable_name];
     }
+    public set_locator_disabled(variable_name: string, disabled: boolean): void {
+        this.locatorHandler?.setDisabled(variable_name, disabled);
+    }
+    public set_locator_visible(variable_name: string, visible: boolean): void {
+        this.locatorHandler?.setVisible(variable_name, visible);
+    }
 
     public label(variable_name: string, value: any, display_format_func: formatFunction = defaultFormat_f) {
 
@@ -298,6 +304,8 @@ export class Interactive {
             setter = (pos: Vector2) => {
                 const s = this.global_scale_factor;
                 let coord = closest_point_from_polylines(pos, track);
+                this.inp_variables[variable_name] = coord;
+                this.locatorHandler!.element_pos[variable_name] = coord;
                 locator_svg.setAttribute("transform", `translate(${coord.x * s},${-coord.y * s})`)
                 return coord;
             }
@@ -305,6 +313,8 @@ export class Interactive {
         else {
             setter = (pos: Vector2) => {
                 const s = this.global_scale_factor;
+                this.inp_variables[variable_name] = pos;
+                this.locatorHandler!.element_pos[variable_name] = pos;
                 locator_svg.setAttribute("transform", `translate(${pos.x * s},${-pos.y * s})`)
                 return pos;
             }
@@ -408,6 +418,8 @@ export class Interactive {
             setter = (pos: Vector2) => {
                 let coord = closest_point_from_polylines(pos, track);
                 const s = this.global_scale_factor;
+                this.inp_variables[variable_name] = coord;
+                this.locatorHandler!.element_pos[variable_name] = coord;
                 locator_svg.setAttribute("transform", `translate(${coord.x * s},${-coord.y * s})`)
                 return coord;
             }
@@ -415,6 +427,8 @@ export class Interactive {
         else {
             setter = (pos: Vector2) => {
                 const s = this.global_scale_factor;
+                this.inp_variables[variable_name] = pos;
+                this.locatorHandler!.element_pos[variable_name] = pos;
                 locator_svg.setAttribute("transform", `translate(${pos.x * s},${-pos.y * s})`)
                 return pos;
             }
@@ -1115,11 +1129,14 @@ class LocatorHandler {
     first_touch_callback: Function | null = null;
     element_pos: { [key: string]: Vector2 } = {};
     snap_handlers: { [key: string]: (pos: Vector2) => Vector2 } = {};
+    disabled: { [key: string]: boolean } = {};
+    visible: { [key: string]: boolean } = {};
 
     constructor(public control_svg: SVGSVGElement, public diagram_svg: SVGSVGElement, public global_scale_factor: number) {
     }
 
     startDrag(evt: LocatorEvent, variable_name: string, selectedElement: SVGElement) {
+        if (this.disabled[variable_name] || this.visible[variable_name] === false) return;
         this.selectedElement = selectedElement;
         this.selectedVariable = variable_name;
 
@@ -1212,6 +1229,24 @@ class LocatorHandler {
     registerSnapHandler(name: string, handler: (pos: Vector2) => Vector2) {
         this.snap_handlers[name] = handler;
     }
+    setDisabled(name: string, disabled: boolean) {
+        this.disabled[name] = disabled;
+        if (disabled && this.selectedVariable === name) {
+            this.selectedElement = null;
+            this.selectedVariable = null;
+        }
+    }
+    setVisible(name: string, visible: boolean) {
+        this.visible[name] = visible;
+        const element = this.svg_elements[name];
+        if (element) {
+            element.style.display = visible ? '' : 'none';
+        }
+        if (!visible && this.selectedVariable === name) {
+            this.selectedElement = null;
+            this.selectedVariable = null;
+        }
+    }
     addBlinkingCircleOuter(circle_outer: Element) {
         this.blinking_circle_outers.push(circle_outer);
     }
@@ -1243,6 +1278,7 @@ class LocatorHandler {
 
 
         this.svg_elements[name] = g;
+        this.visible[name] = this.visible[name] ?? true;
         this.element_pos[name]
         return g;
     }
@@ -1307,6 +1343,7 @@ class LocatorHandler {
         }
 
         this.svg_elements[name] = g;
+        this.visible[name] = this.visible[name] ?? true;
         return g;
     }
 
