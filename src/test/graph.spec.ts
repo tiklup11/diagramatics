@@ -1,4 +1,11 @@
-import { get_tick_numbers, xticks, yticks, xyaxes_decomposed } from '../shapes/shapes_graph.js'
+import {
+    get_tick_numbers,
+    xticks,
+    yticks,
+    xyaxes_decomposed,
+    xycorneraxes,
+    xycorneraxes_xbreak,
+} from '../shapes/shapes_graph.js'
 import { TAG } from '../tag_names.js';
 import { expect } from 'chai';
 import 'mocha';
@@ -16,20 +23,73 @@ describe('Graph', () => {
         });
 
         it('can hide tick labels on x or y independently', () => {
-            const xtNoLabels = xticks({ xrange: [0, 3], yrange: [0, 3], show_xtick_labels: false });
-            const ytNoLabels = yticks({ xrange: [0, 3], yrange: [0, 3], show_ytick_labels: false });
-            const bothShown = xyaxes_decomposed({ xrange: [0, 3], yrange: [0, 3] });
-            const xHidden = xyaxes_decomposed({ xrange: [0, 3], yrange: [0, 3], show_xtick_labels: false });
-            const yHidden = xyaxes_decomposed({ xrange: [0, 3], yrange: [0, 3], show_ytick_labels: false });
+            const bothShown = xyaxes_decomposed({ xrange: [-3, 3], yrange: [-3, 3] });
+            const positiveXLabelsOnly = xyaxes_decomposed({
+                xrange: [-3, 3],
+                yrange: [-3, 3],
+                showtickLabelsfor: ['+x', '+y', '-y'],
+            });
+            const negativeYLabelsOnly = xyaxes_decomposed({
+                xrange: [-3, 3],
+                yrange: [-3, 3],
+                showtickLabelsfor: ['+x', '-x', '-y'],
+            });
+            const noLabels = xyaxes_decomposed({
+                xrange: [-3, 3],
+                yrange: [-3, 3],
+                showtickLabelsfor: [],
+            });
 
-            expect(xtNoLabels.get_tagged_elements(TAG.GRAPH_TICK_LABEL)).to.have.length(0);
-            expect(ytNoLabels.get_tagged_elements(TAG.GRAPH_TICK_LABEL)).to.have.length(0);
-            expect(bothShown.xticks.get_tagged_elements(TAG.GRAPH_TICK_LABEL)).to.not.have.length(0);
-            expect(bothShown.yticks.get_tagged_elements(TAG.GRAPH_TICK_LABEL)).to.not.have.length(0);
-            expect(xHidden.xticks.get_tagged_elements(TAG.GRAPH_TICK_LABEL)).to.have.length(0);
-            expect(xHidden.yticks.get_tagged_elements(TAG.GRAPH_TICK_LABEL)).to.not.have.length(0);
-            expect(yHidden.xticks.get_tagged_elements(TAG.GRAPH_TICK_LABEL)).to.not.have.length(0);
-            expect(yHidden.yticks.get_tagged_elements(TAG.GRAPH_TICK_LABEL)).to.have.length(0);
+            expect(bothShown.xticks.get_tagged_elements(TAG.GRAPH_TICK_LABEL)).to.have.length(4);
+            expect(bothShown.yticks.get_tagged_elements(TAG.GRAPH_TICK_LABEL)).to.have.length(4);
+            expect(positiveXLabelsOnly.xticks.get_tagged_elements(TAG.GRAPH_TICK_LABEL)).to.have.length(2);
+            expect(positiveXLabelsOnly.yticks.get_tagged_elements(TAG.GRAPH_TICK_LABEL)).to.have.length(4);
+            expect(negativeYLabelsOnly.xticks.get_tagged_elements(TAG.GRAPH_TICK_LABEL)).to.have.length(4);
+            expect(negativeYLabelsOnly.yticks.get_tagged_elements(TAG.GRAPH_TICK_LABEL)).to.have.length(2);
+            expect(noLabels.xticks.get_tagged_elements(TAG.GRAPH_TICK_LABEL)).to.have.length(0);
+            expect(noLabels.yticks.get_tagged_elements(TAG.GRAPH_TICK_LABEL)).to.have.length(0);
+        });
+
+        it('can show ticks by axis side arrays', () => {
+            const bothShown = xyaxes_decomposed({ xrange: [-3, 3], yrange: [-3, 3] });
+            const positiveOnly = xyaxes_decomposed({
+                xrange: [-3, 3],
+                yrange: [-3, 3],
+                showticksfor: ['+x', '+y'],
+            });
+            const negativeOnly = xyaxes_decomposed({
+                xrange: [-3, 3],
+                yrange: [-3, 3],
+                showticksfor: ['-x', '-y'],
+            });
+            const noTicks = xyaxes_decomposed({
+                xrange: [-3, 3],
+                yrange: [-3, 3],
+                showticksfor: [],
+            });
+            const cornerPositiveOnly = xycorneraxes({
+                xrange: [-3, 3],
+                yrange: [-3, 3],
+                showticksfor: ['+x', '+y'],
+            });
+            const cornerBreakNegativeOnly = xycorneraxes_xbreak({
+                xrange: [-3, 3],
+                yrange: [-3, 3],
+                showticksfor: ['-x', '-y'],
+            });
+
+            expect(bothShown.xticks.get_tagged_elements(TAG.GRAPH_TICK)).to.have.length(4);
+            expect(bothShown.yticks.get_tagged_elements(TAG.GRAPH_TICK)).to.have.length(4);
+            expect(positiveOnly.xticks.get_tagged_elements(TAG.GRAPH_TICK)).to.have.length(2);
+            expect(positiveOnly.yticks.get_tagged_elements(TAG.GRAPH_TICK)).to.have.length(2);
+            expect(negativeOnly.xticks.get_tagged_elements(TAG.GRAPH_TICK)).to.have.length(2);
+            expect(negativeOnly.yticks.get_tagged_elements(TAG.GRAPH_TICK)).to.have.length(2);
+            expect(noTicks.xticks.get_tagged_elements(TAG.GRAPH_TICK)).to.have.length(0);
+            expect(noTicks.yticks.get_tagged_elements(TAG.GRAPH_TICK)).to.have.length(0);
+            expect(noTicks.axes.get_tagged_elements(TAG.GRAPH_AXIS)).to.have.length(2);
+
+            expect(cornerPositiveOnly.get_tagged_elements(TAG.GRAPH_TICK)).to.have.length(6);
+            expect(cornerBreakNegativeOnly.get_tagged_elements(TAG.GRAPH_TICK)).to.have.length(6);
         });
     });
 

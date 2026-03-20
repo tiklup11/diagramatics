@@ -20,8 +20,8 @@ export type axes_options = {
     ticksize: number,
     headsize: number,
     tick_label_offset?: number,
-    show_xtick_labels?: boolean,
-    show_ytick_labels?: boolean,
+    showticksfor?: ('+x' | '-x' | '+y' | '-y')[],
+    showtickLabelsfor?: ('+x' | '-x' | '+y' | '-y')[],
     xlabel?: string,
     ylabel?: string,
     axis_label_offset?: number,
@@ -38,11 +38,41 @@ export let default_axes_options: axes_options = {
     ticksize: 0.2,
     headsize: 0.05,
     tick_label_offset: 0.07,
-    show_xtick_labels: true,
-    show_ytick_labels: true,
+    showticksfor: ['+x', '-x', '+y', '-y'],
+    showtickLabelsfor: ['+x', '-x', '+y', '-y'],
     xlabel: undefined,
     ylabel: undefined,
     axis_label_offset: 0.3,
+}
+
+function is_zeroish(value: number, eps: number = 1e-9): boolean {
+    return Math.abs(value) <= eps;
+}
+
+function is_shown_for(
+    opt: axes_options,
+    direction: '+x' | '-x' | '+y' | '-y',
+    key: 'showticksfor' | 'showtickLabelsfor',
+): boolean {
+    return (opt[key] ?? default_axes_options[key] ?? []).includes(direction);
+}
+
+function is_x_side_shown(
+    x: number,
+    opt: axes_options,
+    key: 'showticksfor' | 'showtickLabelsfor',
+): boolean {
+    if (is_zeroish(x)) return is_shown_for(opt, '+x', key) || is_shown_for(opt, '-x', key);
+    return x > 0 ? is_shown_for(opt, '+x', key) : is_shown_for(opt, '-x', key);
+}
+
+function is_y_side_shown(
+    y: number,
+    opt: axes_options,
+    key: 'showticksfor' | 'showtickLabelsfor',
+): boolean {
+    if (is_zeroish(y)) return is_shown_for(opt, '+y', key) || is_shown_for(opt, '-y', key);
+    return y > 0 ? is_shown_for(opt, '+y', key) : is_shown_for(opt, '-y', key);
 }
 
 export function axes_transform(axes_options?: Partial<axes_options>): (v: Vector2) => Vector2 {
@@ -304,11 +334,12 @@ export function xticks(axes_options: Partial<axes_options>, y: number = 0, empty
     // remove ticks outside of the range
     // opt.xticks = opt.xticks.filter(x => x >= opt.xrange[0] && x <= opt.xrange[1]);
     opt.xticks = opt.xticks.filter(x => x > opt.xrange[0] && x < opt.xrange[1]);
+    opt.xticks = opt.xticks.filter(x => is_x_side_shown(x, opt, 'showticksfor'));
 
-    let hideLabels = empty || opt.show_xtick_labels === false;
-    let xticks_diagrams = hideLabels ?
-        opt.xticks.map(x => xtickmark_empty(x, y, opt)) :
-        opt.xticks.map(x => xtickmark(x, y, x.toString(), opt));
+    let xticks_diagrams = opt.xticks.map(x => {
+        let hideLabelForTick = empty || !is_x_side_shown(x, opt, 'showtickLabelsfor');
+        return hideLabelForTick ? xtickmark_empty(x, y, opt) : xtickmark(x, y, x.toString(), opt);
+    });
     return diagram_combine(...xticks_diagrams);
 }
 export function yticks(axes_options: Partial<axes_options>, x: number = 0, empty = false): Diagram {
@@ -320,11 +351,12 @@ export function yticks(axes_options: Partial<axes_options>, x: number = 0, empty
     // remove ticks outside of the range
     // opt.yticks = opt.yticks.filter(y => y >= opt.yrange[0] && y <= opt.yrange[1]);
     opt.yticks = opt.yticks.filter(y => y > opt.yrange[0] && y < opt.yrange[1]);
+    opt.yticks = opt.yticks.filter(y => is_y_side_shown(y, opt, 'showticksfor'));
 
-    let hideLabels = empty || opt.show_ytick_labels === false;
-    let yticks_diagrams = hideLabels ?
-        opt.yticks.map(y => ytickmark_empty(y, x, opt)) :
-        opt.yticks.map(y => ytickmark(y, x, y.toString(), opt));
+    let yticks_diagrams = opt.yticks.map(y => {
+        let hideLabelForTick = empty || !is_y_side_shown(y, opt, 'showtickLabelsfor');
+        return hideLabelForTick ? ytickmark_empty(y, x, opt) : ytickmark(y, x, y.toString(), opt);
+    });
     return diagram_combine(...yticks_diagrams);
 }
 
