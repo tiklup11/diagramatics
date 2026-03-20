@@ -10,19 +10,21 @@ export interface FeedbackMarkerOptions {
     badgeOffsetY?: number;
     dotRadius?: number;
     badgeSize?: number;
-    cornerRadius?: number;
     strokeWidth?: number;
     linecap?: 'butt' | 'round' | 'square';
 }
 
+const BADGE_VIEWBOX_SIZE = 24;
+const BADGE_CORNER_RADIUS = 5.2;
+
 const DEFAULT_STYLE = {
     check: {
         badgeColor: '#58B64F',
-        dotColor: '#7FD57A',
+        dotColor: '#58B64F',
     },
     x: {
         badgeColor: '#E05252',
-        dotColor: '#F07E7E',
+        dotColor: '#E05252',
     },
 } as const;
 
@@ -38,8 +40,8 @@ function badgeSvg(
         : `<path d="M7.5 7.5L16.5 16.5M16.5 7.5L7.5 16.5" fill="none" stroke="${iconColor}" stroke-width="${strokeWidth}" stroke-linecap="${linecap}" stroke-linejoin="round"/>`;
 
     return (
-        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">` +
-        `<rect x="0" y="0" width="24" height="24" rx="5.2" fill="${badgeColor}"/>` +
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${BADGE_VIEWBOX_SIZE} ${BADGE_VIEWBOX_SIZE}" width="${BADGE_VIEWBOX_SIZE}" height="${BADGE_VIEWBOX_SIZE}">` +
+        `<rect x="0" y="0" width="${BADGE_VIEWBOX_SIZE}" height="${BADGE_VIEWBOX_SIZE}" rx="${BADGE_CORNER_RADIUS}" fill="${badgeColor}"/>` +
         iconPath +
         `</svg>`
     );
@@ -68,10 +70,11 @@ export function feedback_marker(
     const dotColor = options.dotColor ?? DEFAULT_STYLE[kind].dotColor;
     const iconColor = options.iconColor ?? '#FFFFFF';
     const badgeSize = options.badgeSize ?? size * 1.5;
-    const badgeOffsetY = options.badgeOffsetY ?? size * 1.35;
     const dotRadius = options.dotRadius ?? size * 0.45;
     const strokeWidth = options.strokeWidth ?? 2.8;
     const linecap = options.linecap ?? 'round';
+    const badgeGap = size * 0.18;
+    const badgeOffsetY = options.badgeOffsetY ?? (dotRadius + badgeGap + badgeSize / 2);
 
     const badgeCenter = V2(0, badgeOffsetY);
     const badge = badgeImage(kind, badgeSize, badgeColor, iconColor, strokeWidth, linecap)
@@ -81,5 +84,5 @@ export function feedback_marker(
         .stroke(dotColor)
         .strokewidth(dotRadius * 0.12);
 
-    return diagram_combine(badge, dot).position(point);
+    return diagram_combine(dot, badge).position(point);
 }
