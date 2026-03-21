@@ -210,7 +210,7 @@ export class Interactive {
             svg_element.setAttribute("meta", metaname);
             svg_element.setAttribute("width", "100%");
             svg_element.setAttribute("height", "100%");
-            if (this.isTargetingDocument()) svg_element.style.overflow = "visible";
+            svg_element.style.overflow = "visible";
             this.diagram_outer_svg.appendChild(svg_element);
         }
 
@@ -1294,13 +1294,31 @@ class LocatorHandler {
         const strokeClr = style?.stroke ?? 'white';
         const strokeW = (style?.stroke_width ?? r * 0.5) / s;
 
+        // SVG filter for drop shadow
+        const filterId = `locator-shadow-${name}`;
+        let defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+        let filter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
+        filter.setAttribute("id", filterId);
+        filter.setAttribute("x", "-100%");
+        filter.setAttribute("y", "-100%");
+        filter.setAttribute("width", "300%");
+        filter.setAttribute("height", "300%");
+        let feDropShadow = document.createElementNS("http://www.w3.org/2000/svg", "feDropShadow");
+        feDropShadow.setAttribute("dx", "0");
+        feDropShadow.setAttribute("dy", (r * 0.3).toString());
+        feDropShadow.setAttribute("stdDeviation", (r * 0.5).toString());
+        feDropShadow.setAttribute("flood-color", "rgba(0,0,0,0.35)");
+        filter.appendChild(feDropShadow);
+        defs.appendChild(filter);
+        g.appendChild(defs);
+
         // Visual group — CSS scale transition for press animation
         let visualGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
         visualGroup.setAttribute("overflow", "visible");
-        visualGroup.style.transition = 'transform 150ms, filter 150ms';
+        visualGroup.setAttribute("filter", `url(#${filterId})`);
+        visualGroup.style.transition = 'transform 150ms';
         visualGroup.style.transformBox = 'fill-box';
         visualGroup.style.transformOrigin = 'center';
-        visualGroup.style.filter = 'drop-shadow(0px 0px 8px rgba(0,0,0,0.4))';
 
         let thumb = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         thumb.setAttribute("r", r.toString());
@@ -1320,11 +1338,9 @@ class LocatorHandler {
         // Press animation
         const pressStart = () => {
             visualGroup.style.transform = 'scale(1.33)';
-            visualGroup.style.filter = 'drop-shadow(0px 0px 6px rgba(0,0,0,0.55))';
         };
         const pressEnd = () => {
             visualGroup.style.transform = '';
-            visualGroup.style.filter = 'drop-shadow(0px 0px 8px rgba(0,0,0,0.4))';
         };
         g.addEventListener('mousedown', () => {
             pressStart();

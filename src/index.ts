@@ -87,5 +87,5 @@ export type { FeedbackMarkerOptions } from './shapes/util_shapes.js'
 export * as encoding from './encoding.js'
 
 // Widgets
-export { mcq_interactive, mcq_setup, MCQ_FONT } from './shapes/shapes_mcq.js'
+export { mcq_interactive, mcq_setup } from './shapes/shapes_mcq.js'
 export type { McqChoice, McqHandle, McqSlideState, McqSetupOpts } from './shapes/shapes_mcq.js'
