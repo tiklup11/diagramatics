@@ -40,7 +40,6 @@ const GAP_X   = 6;
 const GAP_Y   = 6;
 const HALF_CW = CARD_W / 2;
 const HALF_CH = CARD_H / 2;
-export const MCQ_FONT = 'CoFo Sans, sans-serif';
 
 const COL_X = [-(HALF_CW + GAP_X / 2), +(HALF_CW + GAP_X / 2)];
 const ROW_Y = [+(HALF_CH + GAP_Y / 2), -(HALF_CH + GAP_Y / 2)];
