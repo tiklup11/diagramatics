@@ -38,6 +38,16 @@ export type SnapConfig = {
     threshold?: number,
 }
 
+export type LocatorDragState = 'idle' | 'dragging';
+
+type LocatorEnterEvent = {
+    locatorName: string;
+    eventType: string;
+    polylines: Vector2[][];
+    threshold: number;
+    isInside: boolean;
+}
+
 enum control_svg_name {
     locator = "control_svg",
     dnd = "dnd_svg",
@@ -70,6 +80,8 @@ export class Interactive {
 
     private focus_padding: number = 1;
     private global_scale_factor = 1;
+    private _locatorEnterEvents: LocatorEnterEvent[] = [];
+    public onLocatorEvent: ((locatorName: string, eventType: string) => void) | null = null;
 
     public draw_function: (inp_object: inpVariables_t, setter_object?: inpSetter_t) => any
         = (_) => { };
@@ -93,6 +105,11 @@ export class Interactive {
         public event_target: HTML_INT_TARGET = HTML_INT_TARGET.SVG,
     ) {
         if (inp_object_ != undefined) { this.inp_variables = inp_object_; }
+        this.onLocatorEvent = (_locatorName, eventType) => {
+            if (eventType === 'haptic' && navigator.vibrate) {
+                navigator.vibrate([2, 6]);
+            }
+        };
     }
 
     public draw(): void {
@@ -115,6 +132,34 @@ export class Interactive {
     }
     public set_locator_visible(variable_name: string, visible: boolean): void {
         this.locatorHandler?.setVisible(variable_name, visible);
+    }
+    public locator_state(variable_name: string): LocatorDragState {
+        if (this.locatorHandler?.selectedVariable === variable_name) return 'dragging';
+        return 'idle';
+    }
+
+    public on_locator_enter(locatorName: string, eventType: string, diagram: Diagram, threshold: number = 0.2): void {
+        const polylines = collect_polylines_from_diagram(diagram);
+        this._locatorEnterEvents.push({
+            locatorName, eventType, polylines, threshold, isInside: false,
+        });
+    }
+
+    /** Called by LocatorHandler on each drag move to check enter events. */
+    _checkLocatorEnterEvents(locatorName: string, pos: Vector2): void {
+        for (const evt of this._locatorEnterEvents) {
+            if (evt.locatorName !== locatorName) continue;
+            const closest = closest_point_from_polylines(pos, evt.polylines);
+            const dist = closest.sub(pos).length();
+            if (dist < evt.threshold) {
+                if (!evt.isInside) {
+                    evt.isInside = true;
+                    this.onLocatorEvent?.(locatorName, evt.eventType);
+                }
+            } else {
+                evt.isInside = false;
+            }
+        }
     }
 
     public label(variable_name: string, value: any, display_format_func: formatFunction = defaultFormat_f) {
@@ -265,6 +310,8 @@ export class Interactive {
         if (this.locatorHandler == undefined) {
             let locatorHandler = new LocatorHandler(control_svg, diagram_svg, this.global_scale_factor);
             this.locatorHandler = locatorHandler;
+            locatorHandler.onDragStateChange = () => { this.draw(); };
+            locatorHandler.onDragMove = (name, pos) => { this._checkLocatorEnterEvents(name, pos); };
             const eventTarget = this.isTargetingDocument() ? document : this.diagram_outer_svg;
             this.registerEventListener(eventTarget, 'mousemove', (evt: any) => { locatorHandler.drag(evt) });
             this.registerEventListener(eventTarget, 'mouseup', (evt: any) => { locatorHandler.endDrag(evt) });
@@ -384,6 +431,8 @@ export class Interactive {
         if (this.locatorHandler == undefined) {
             let locatorHandler = new LocatorHandler(control_svg, diagram_svg, this.global_scale_factor);
             this.locatorHandler = locatorHandler;
+            locatorHandler.onDragStateChange = () => { this.draw(); };
+            locatorHandler.onDragMove = (name, pos) => { this._checkLocatorEnterEvents(name, pos); };
             const eventTarget = this.isTargetingDocument() ? document : this.diagram_outer_svg;
             this.registerEventListener(eventTarget, 'mousemove', (evt: any) => { locatorHandler.drag(evt); })
             this.registerEventListener(eventTarget, 'mouseup', (evt: any) => { locatorHandler.endDrag(evt); })
@@ -1144,6 +1193,8 @@ class LocatorHandler {
     bounds: { [key: string]: [Vector2, Vector2] } = {};
     disabled: { [key: string]: boolean } = {};
     visible: { [key: string]: boolean } = {};
+    onDragStateChange: (() => void) | null = null;
+    onDragMove: ((locatorName: string, pos: Vector2) => void) | null = null;
 
     constructor(public control_svg: SVGSVGElement, public diagram_svg: SVGSVGElement, public global_scale_factor: number) {
     }
@@ -1164,6 +1215,7 @@ class LocatorHandler {
         }
 
         this.handleBlinking();
+        this.onDragStateChange?.();
     }
     drag(evt: LocatorEvent) {
         if (this.selectedElement == undefined) return;
@@ -1199,6 +1251,7 @@ class LocatorHandler {
         if (this.callbacks[this.selectedVariable] != undefined) {
             this.callbacks[this.selectedVariable](pos);
         }
+        this.onDragMove?.(this.selectedVariable, pos);
         this.setViewBox();
 
     }
@@ -1224,6 +1277,7 @@ class LocatorHandler {
         }
         this.selectedElement = null;
         this.selectedVariable = null;
+        this.onDragStateChange?.();
     }
 
     public remove(variable_name: string): void {

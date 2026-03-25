@@ -90,3 +90,12 @@ export function feedback_marker(
 
     return diagram_combine(dot, badge).position(point);
 }
+
+export function point_highlight(
+    points: Vector2[],
+    radius: number = 0.08,
+    color: string = 'rgba(0,0,0,0.2)',
+): Diagram {
+    const dots = points.map(p => circle(radius).fill(color).stroke('none').position(p));
+    return diagram_combine(...dots);
+}

@@ -80,7 +80,7 @@ export * as tree from './shapes/shapes_tree.js'
 export * as curves from './shapes/shapes_curves.js'
 export * as shapes3d from './shapes/3d-like-shapes.js'
 export * as pseudo3d from './3d.js'
-export { feedback_marker } from './shapes/util_shapes.js'
+export { feedback_marker, point_highlight } from './shapes/util_shapes.js'
 export type { FeedbackMarkerOptions } from './shapes/util_shapes.js'
 
 // Mics
