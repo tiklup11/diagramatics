@@ -1,4 +1,4 @@
-import { circle } from '../shapes.js';
+import { circle, lowpoly_circle } from '../shapes.js';
 import { diagram_combine, image, type Diagram } from '../diagram.js';
 import { V2, type Vector2 } from '../vector.js';
 
@@ -93,9 +93,9 @@ export function feedback_marker(
 
 export function point_highlight(
     points: Vector2[],
-    radius: number = 0.02,
+    radius: number = 0.05,
     color: string = '#cecfcd',
 ): Diagram {
-    const dots = points.map(p => circle(radius).fill(color).stroke('none').position(p));
+    const dots = points.map(p => lowpoly_circle(radius).fill(color).stroke('none').position(p));
     return diagram_combine(...dots);
 }

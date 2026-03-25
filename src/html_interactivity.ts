@@ -1110,7 +1110,19 @@ export function compute_intersections(...diagrams: Diagram[]): Vector2[] {
             }
         }
     }
-    return results;
+    // Deduplicate near-identical intersection points
+    const EPS_SQ = 1e-8;
+    const deduped: Vector2[] = [];
+    for (const p of results) {
+        let isDup = false;
+        for (const q of deduped) {
+            const dx = p.x - q.x;
+            const dy = p.y - q.y;
+            if (dx * dx + dy * dy < EPS_SQ) { isDup = true; break; }
+        }
+        if (!isDup) deduped.push(p);
+    }
+    return deduped;
 }
 
 // helper to calculate CTM in firefox
