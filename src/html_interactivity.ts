@@ -1520,9 +1520,9 @@ class LocatorHandler {
         filter.setAttribute("height", "300%");
         let feDropShadow = document.createElementNS("http://www.w3.org/2000/svg", "feDropShadow");
         feDropShadow.setAttribute("dx", "0");
-        feDropShadow.setAttribute("dy", (r * 0.3).toString());
-        feDropShadow.setAttribute("stdDeviation", (r * 0.5).toString());
-        feDropShadow.setAttribute("flood-color", "rgba(0,0,0,0.55)");
+        feDropShadow.setAttribute("dy", (r * 0.15).toString());
+        feDropShadow.setAttribute("stdDeviation", (r * 0.2).toString());
+        feDropShadow.setAttribute("flood-color", "rgba(0,0,0,0.8)");
         filter.appendChild(feDropShadow);
         defs.appendChild(filter);
         g.appendChild(defs);
@@ -1534,9 +1534,8 @@ class LocatorHandler {
 
         let ring = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         ring.setAttribute("r", r.toString());
-        ring.setAttribute("fill", "rgba(255,255,255,0.25)");
-        ring.setAttribute("stroke", "rgba(255,255,255,0.45)");
-        ring.setAttribute("stroke-width", ringStrokeW.toString());
+        ring.setAttribute("fill", "rgba(255,255,255,0.35)");
+        ring.setAttribute("stroke", "none");
         ringGroup.appendChild(ring);
         g.appendChild(ringGroup);
 
