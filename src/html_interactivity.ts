@@ -31,6 +31,7 @@ export type LocatorStyle = {
     color?: string,
     stroke?: string,
     stroke_width?: number,
+    variant?: 'classic' | 'ring',
 }
 
 export type SnapConfig = {
@@ -1376,6 +1377,14 @@ class LocatorHandler {
     }
 
     create_locator_circle_pointer_svg(name: string, radius: number, value: Vector2, color: string, blink: boolean, style?: LocatorStyle): SVGGElement {
+        const variant = style?.variant ?? 'classic';
+        if (variant === 'ring') {
+            return this._create_locator_ring_svg(name, radius, value, style);
+        }
+        return this._create_locator_classic_svg(name, radius, value, style);
+    }
+
+    private _create_locator_classic_svg(name: string, radius: number, value: Vector2, style?: LocatorStyle): SVGGElement {
         let g = document.createElementNS("http://www.w3.org/2000/svg", "g");
         g.setAttribute("overflow", "visible");
         g.style.cursor = "pointer";
@@ -1433,6 +1442,92 @@ class LocatorHandler {
         };
         const pressEnd = () => {
             visualGroup.style.transform = '';
+        };
+        g.addEventListener('mousedown', () => {
+            pressStart();
+            document.addEventListener('mouseup', pressEnd, { once: true });
+        });
+        g.addEventListener('touchstart', () => {
+            pressStart();
+            document.addEventListener('touchend', pressEnd, { once: true, passive: true } as any);
+        }, { passive: true });
+
+        g.setAttribute("transform", `translate(${value.x * s},${-value.y * s})`)
+        if (this.svg_elements[name]) {
+            this.svg_elements[name].replaceWith(g);
+        } else {
+            this.control_svg.appendChild(g);
+        }
+
+        this.svg_elements[name] = g;
+        this.visible[name] = this.visible[name] ?? true;
+        return g;
+    }
+
+    private _create_locator_ring_svg(name: string, radius: number, value: Vector2, style?: LocatorStyle): SVGGElement {
+        let g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        g.setAttribute("overflow", "visible");
+        g.style.cursor = "pointer";
+
+        const s = this.global_scale_factor;
+        const r = radius / s;
+        const dotColor = style?.color ?? '#111827';
+        const ringStrokeW = (style?.stroke_width ?? r * 0.3) / s;
+        const dotR = r * 0.4;
+
+        // SVG filter for drop shadow
+        const filterId = `locator-shadow-${name}`;
+        let defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+        let filter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
+        filter.setAttribute("id", filterId);
+        filter.setAttribute("x", "-100%");
+        filter.setAttribute("y", "-100%");
+        filter.setAttribute("width", "300%");
+        filter.setAttribute("height", "300%");
+        let feDropShadow = document.createElementNS("http://www.w3.org/2000/svg", "feDropShadow");
+        feDropShadow.setAttribute("dx", "0");
+        feDropShadow.setAttribute("dy", (r * 0.3).toString());
+        feDropShadow.setAttribute("stdDeviation", (r * 0.5).toString());
+        feDropShadow.setAttribute("flood-color", "rgba(0,0,0,0.55)");
+        filter.appendChild(feDropShadow);
+        defs.appendChild(filter);
+        g.appendChild(defs);
+
+        // Static outer ring
+        let ringGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        ringGroup.setAttribute("overflow", "visible");
+        ringGroup.setAttribute("filter", `url(#${filterId})`);
+
+        let ring = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        ring.setAttribute("r", r.toString());
+        ring.setAttribute("fill", "rgba(255,255,255,0.25)");
+        ring.setAttribute("stroke", "rgba(255,255,255,0.45)");
+        ring.setAttribute("stroke-width", ringStrokeW.toString());
+        ringGroup.appendChild(ring);
+        g.appendChild(ringGroup);
+
+        // Animated inner dot
+        let dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        dot.setAttribute("r", dotR.toString());
+        dot.setAttribute("fill", dotColor);
+        dot.setAttribute("stroke", "none");
+        dot.style.transition = 'r 150ms ease-out';
+        ringGroup.appendChild(dot);
+
+        // Transparent hit area
+        let hitArea = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        hitArea.setAttribute("r", ((r + ringStrokeW) * 1.5).toString());
+        hitArea.setAttribute("fill", "transparent");
+        hitArea.setAttribute("stroke", "none");
+        g.appendChild(hitArea);
+
+        // Press animation — scale only the inner dot
+        const dragDotR = dotR * 2.2;
+        const pressStart = () => {
+            dot.setAttribute("r", dragDotR.toString());
+        };
+        const pressEnd = () => {
+            dot.setAttribute("r", dotR.toString());
         };
         g.addEventListener('mousedown', () => {
             pressStart();
