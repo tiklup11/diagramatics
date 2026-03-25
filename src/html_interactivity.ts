@@ -253,6 +253,7 @@ export class Interactive {
         callback?: (locator_name: string, position: Vector2) => any,
         style?: LocatorStyle,
         snap_config?: SnapConfig,
+        bounds?: [Vector2, Vector2],
     ) {
         if (this.diagram_outer_svg == undefined) throw Error("diagram_outer_svg in Interactive class is undefined");
         this.inp_variables[variable_name] = value;
@@ -341,6 +342,11 @@ export class Interactive {
             });
         }
 
+        // =============== bounds
+        if (bounds) {
+            this.locatorHandler.registerBounds(variable_name, bounds);
+        }
+
         // set initial position
         let init_pos = setter(value);
         this.locatorHandler.setPos(variable_name, init_pos);
@@ -366,6 +372,7 @@ export class Interactive {
         callback?: (locator_name: string, position: Vector2) => any,
         callback_rightclick?: (locator_name: string) => any,
         snap_config?: SnapConfig,
+        bounds?: [Vector2, Vector2],
     ) {
         if (this.diagram_outer_svg == undefined) throw Error("diagram_outer_svg in Interactive class is undefined");
         this.inp_variables[variable_name] = value;
@@ -453,6 +460,11 @@ export class Interactive {
                 }
                 return best_p;
             });
+        }
+
+        // =============== bounds
+        if (bounds) {
+            this.locatorHandler.registerBounds(variable_name, bounds);
         }
 
         // set initial position
@@ -1129,6 +1141,7 @@ class LocatorHandler {
     first_touch_callback: Function | null = null;
     element_pos: { [key: string]: Vector2 } = {};
     snap_handlers: { [key: string]: (pos: Vector2) => Vector2 } = {};
+    bounds: { [key: string]: [Vector2, Vector2] } = {};
     disabled: { [key: string]: boolean } = {};
     visible: { [key: string]: boolean } = {};
 
@@ -1163,6 +1176,16 @@ class LocatorHandler {
 
         const s = this.global_scale_factor;
         let pos = V2(coord.x / s, coord.y / s).add(this.mouseOffset);
+
+        // Clamp to bounds
+        const b = this.bounds[this.selectedVariable];
+        if (b) {
+            pos = V2(
+                Math.max(b[0].x, Math.min(b[1].x, pos.x)),
+                Math.max(b[0].y, Math.min(b[1].y, pos.y)),
+            );
+        }
+
         // check if setter for this.selectedVariable exists
         // if it does, call it
         if (this.setter[this.selectedVariable] != undefined) {
@@ -1228,6 +1251,9 @@ class LocatorHandler {
     }
     registerSnapHandler(name: string, handler: (pos: Vector2) => Vector2) {
         this.snap_handlers[name] = handler;
+    }
+    registerBounds(name: string, bounds: [Vector2, Vector2]) {
+        this.bounds[name] = bounds;
     }
     setDisabled(name: string, disabled: boolean) {
         this.disabled[name] = disabled;
