@@ -1275,22 +1275,56 @@ class LocatorHandler {
     }
     endDrag(_: LocatorEvent) {
         if (this.selectedVariable != null) {
-            const snap = this.snap_handlers[this.selectedVariable];
+            const varName = this.selectedVariable;
+            const snap = this.snap_handlers[varName];
             if (snap) {
-                let pos = this.element_pos[this.selectedVariable];
+                let pos = this.element_pos[varName];
                 let snapped = snap(pos);
-                if (this.setter[this.selectedVariable]) {
-                    this.setter[this.selectedVariable](snapped);
+
+                // Update position data immediately
+                this.element_pos[varName] = snapped;
+
+                // Animate the SVG element to the snapped position
+                const svgEl = this.svg_elements[varName];
+                if (svgEl) {
+                    const s = this.global_scale_factor;
+                    svgEl.style.transition = 'transform 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    svgEl.setAttribute("transform", `translate(${snapped.x * s},${-snapped.y * s})`);
+
+                    // Defer the callback/redraw until after the snap animation
+                    let settled = false;
+                    const onDone = () => {
+                        if (settled) return;
+                        settled = true;
+                        svgEl.style.transition = '';
+                        svgEl.removeEventListener('transitionend', onDone);
+                        if (this.setter[varName]) {
+                            this.setter[varName](snapped);
+                        }
+                        if (this.callbacks[varName]) {
+                            this.callbacks[varName](snapped);
+                        }
+                        this.onDragStateChange?.();
+                    };
+                    svgEl.addEventListener('transitionend', onDone);
+                    setTimeout(onDone, 250);
+                } else {
+                    if (this.setter[varName]) {
+                        this.setter[varName](snapped);
+                    }
+                    if (this.callbacks[varName]) {
+                        this.callbacks[varName](snapped);
+                    }
+                    this.onDragStateChange?.();
                 }
-                this.element_pos[this.selectedVariable] = snapped;
-                if (this.callbacks[this.selectedVariable]) {
-                    this.callbacks[this.selectedVariable](snapped);
-                }
+            } else {
+                this.onDragStateChange?.();
             }
+        } else {
+            this.onDragStateChange?.();
         }
         this.selectedElement = null;
         this.selectedVariable = null;
-        this.onDragStateChange?.();
     }
 
     public remove(variable_name: string): void {
