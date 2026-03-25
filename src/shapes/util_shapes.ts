@@ -93,8 +93,8 @@ export function feedback_marker(
 
 export function point_highlight(
     points: Vector2[],
-    radius: number = 0.08,
-    color: string = 'rgba(0,0,0,0.2)',
+    radius: number = 0.02,
+    color: string = '#cecfcd',
 ): Diagram {
     const dots = points.map(p => circle(radius).fill(color).stroke('none').position(p));
     return diagram_combine(...dots);
