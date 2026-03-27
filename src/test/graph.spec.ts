@@ -2,7 +2,7 @@ import {
     get_tick_numbers, xyaxes_decomposed,
     xycorneraxes,
     xycorneraxes_xbreak
-} from '../shapes_basic/shapes_graph.js';
+} from '../daigrams_basic/shapes_graph.js';
 import { TAG } from '../tag_names.js';
 import { expect } from 'chai';
 import 'mocha';

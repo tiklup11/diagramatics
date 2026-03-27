@@ -3,7 +3,7 @@ import { str_to_mathematical_italic } from './unicode_utils.js';
 import { Vector2, V2 } from './vector.js';
 import { f_draw_to_svg, calculate_text_scale } from './draw_svg.js';
 import { rectangle, rectangle_corner } from './shapes.js';
-import { size } from './shapes_basic/shapes_geometry.js';
+import { size } from './daigrams_basic/shapes_geometry.js';
 import { HorizontalAlignment, VerticalAlignment, distribute_horizontal_and_align, distribute_variable_row, distribute_vertical_and_align } from './alignment.js';
 import { expand_directional_value, range } from './utils.js';
 

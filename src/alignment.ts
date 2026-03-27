@@ -1,6 +1,6 @@
 import { Diagram, diagram_combine, empty } from './diagram.js';
 import { V2 } from './vector.js';
-import { size } from './shapes_basic/shapes_geometry.js';
+import { size } from './daigrams_basic/shapes_geometry.js';
 
 export type VerticalAlignment = 'top' | 'center' | 'bottom';
 export type HorizontalAlignment = 'left' | 'center' | 'right';

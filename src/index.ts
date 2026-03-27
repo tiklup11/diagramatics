@@ -62,30 +62,30 @@ export {
     xaxis, yaxis, xgrid, ygrid,
     plot, plotv, plotf, under_curvef,
     axes_options,
-} from './shapes_basic/shapes_graph.js'
-export type { XYAxesDecomposed } from './shapes_basic/shapes_graph.js'
+} from './daigrams_basic/shapes_graph.js'
+export type { XYAxesDecomposed } from './daigrams_basic/shapes_graph.js'
 
 export { TAG } from './tag_names.js'
 
-export * as graph from './shapes_basic/shapes_graph.js'
-export * as geometry from './shapes_basic/shapes_geometry.js'
-export * as annotation from './shapes_basic/shapes_annotation.js'
-export * as mechanics from './shapes_basic/shapes_mechanics.js'
-export * as bar from './shapes_basic/shapes_bar.js'
-export * as numberline from './shapes_basic/shapes_numberline.js'
-export * as table from './shapes_basic/shapes_table.js'
-export * as boxplot from './shapes_basic/shapes_boxplot.js'
+export * as graph from './daigrams_basic/shapes_graph.js'
+export * as geometry from './daigrams_basic/shapes_geometry.js'
+export * as annotation from './daigrams_basic/shapes_annotation.js'
+export * as mechanics from './daigrams_library/mechanics.js'
+export * as bar from './daigrams_basic/shapes_bar.js'
+export * as numberline from './daigrams_basic/shapes_numberline.js'
+export * as table from './daigrams_basic/shapes_table.js'
+export * as boxplot from './daigrams_basic/shapes_boxplot.js'
 export * as geo_construct from './geo_construct/geo_construct.js'
-export * as tree from './shapes_basic/shapes_tree.js'
-export * as curves from './shapes_basic/shapes_curves.js'
-export * as shapes3d from './shapes_basic/3d-like-shapes.js'
+export * as tree from './daigrams_basic/shapes_tree.js'
+export * as curves from './daigrams_basic/shapes_curves.js'
+export * as shapes3d from './daigrams_library/svg_test_diagram.js'
 export * as pseudo3d from './3d.js'
-export { feedback_marker, point_highlight } from './shapes_basic/shapes_marker.js'
-export type { FeedbackMarkerOptions } from './shapes_basic/shapes_marker.js'
+export { feedback_marker, point_highlight } from './daigrams_basic/shapes_marker.js'
+export type { FeedbackMarkerOptions } from './daigrams_basic/shapes_marker.js'
 
 // Mics
 export * as encoding from './encoding.js'
 
 // Widgets
-export { mcq_interactive, mcq_setup } from './shapes_basic/shapes_mcq.js'
-export type { McqChoice, McqHandle, McqSlideState, McqSetupOpts } from './shapes_basic/shapes_mcq.js'
+export { mcq_interactive, mcq_setup } from './daigrams_library/basic_mcq.js'
+export type { McqChoice, McqHandle, McqSlideState, McqSetupOpts } from './daigrams_library/basic_mcq.js'

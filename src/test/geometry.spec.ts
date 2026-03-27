@@ -1,4 +1,4 @@
-import { area } from '../shapes_basic/shapes_geometry.js';
+import { area } from '../daigrams_basic/shapes_geometry.js';
 import { circle, square } from '../index.js';
 import { expect } from 'chai';
 import 'mocha';
