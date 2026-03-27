@@ -1509,20 +1509,20 @@ class LocatorHandler {
         const ringStrokeW = (style?.stroke_width ?? r * 0.3) / s;
         const dotR = r * 0.4;
 
-        // SVG filter for drop shadow
-        const filterId = `locator-shadow-${name}`;
+        // Elevation shadow
+        const filterId = `locator-elevation-${name}`;
         let defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
         let filter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
         filter.setAttribute("id", filterId);
-        filter.setAttribute("x", "-100%");
-        filter.setAttribute("y", "-100%");
-        filter.setAttribute("width", "300%");
-        filter.setAttribute("height", "300%");
+        filter.setAttribute("x", "-50%");
+        filter.setAttribute("y", "-50%");
+        filter.setAttribute("width", "200%");
+        filter.setAttribute("height", "200%");
         let feDropShadow = document.createElementNS("http://www.w3.org/2000/svg", "feDropShadow");
         feDropShadow.setAttribute("dx", "0");
-        feDropShadow.setAttribute("dy", (r * 0.15).toString());
-        feDropShadow.setAttribute("stdDeviation", (r * 0.2).toString());
-        feDropShadow.setAttribute("flood-color", "rgba(0,0,0,0.8)");
+        feDropShadow.setAttribute("dy", "0");
+        feDropShadow.setAttribute("stdDeviation", (r * 0.15).toString());
+        feDropShadow.setAttribute("flood-color", "rgba(0,0,0,0.45)");
         filter.appendChild(feDropShadow);
         defs.appendChild(filter);
         g.appendChild(defs);
@@ -1534,7 +1534,7 @@ class LocatorHandler {
 
         let ring = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         ring.setAttribute("r", r.toString());
-        ring.setAttribute("fill", "rgba(255,255,255,0.35)");
+        ring.setAttribute("fill", "rgba(255,255,255,0.85)");
         ring.setAttribute("stroke", "none");
         ringGroup.appendChild(ring);
         g.appendChild(ringGroup);
