@@ -44,7 +44,7 @@ export function pattern_block(
     style: PatternBlockStyle = {},
 ): Diagram {
     const {
-        color       = '#7C3AED',
+        color = '#7C3AED',
         strokeColor = '#5B21B6',
         strokeWidth = 0.25,
     } = style;
@@ -128,9 +128,9 @@ export function pattern_cells(
     opts: PatternCellsOpts = {},
 ): Diagram {
     const {
-        blockSize   = 2.5,
-        step        = 3.0,
-        color       = '#7C3AED',
+        blockSize = 2.5,
+        step = 3.0,
+        color = '#7C3AED',
         strokeColor = '#5B21B6',
         strokeWidth = 0.25,
     } = opts;
@@ -207,9 +207,9 @@ export function pattern_cells_bounds(
  */
 export function pattern_staircase(n: number, opts: PatternStaircaseOpts = {}): Diagram {
     const {
-        blockSize   = 2.5,
-        step        = 3.0,
-        color       = '#7C3AED',
+        blockSize = 2.5,
+        step = 3.0,
+        color = '#7C3AED',
         strokeColor = '#5B21B6',
         strokeWidth = 0.25,
     } = opts;
