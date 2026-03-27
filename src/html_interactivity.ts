@@ -1505,6 +1505,7 @@ class LocatorHandler {
 
         const s = this.global_scale_factor;
         const r = radius / s;
+        const ringR = r * 1.4;
         const dotColor = style?.color ?? '#111827';
         const ringStrokeW = (style?.stroke_width ?? r * 0.3) / s;
         const dotR = r * 0.4;
@@ -1533,8 +1534,8 @@ class LocatorHandler {
         ringGroup.setAttribute("filter", `url(#${filterId})`);
 
         let ring = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        ring.setAttribute("r", r.toString());
-        ring.setAttribute("fill", "rgba(255,255,255,0.85)");
+        ring.setAttribute("r", ringR.toString());
+        ring.setAttribute("fill", "rgba(255,255,255,0.75)");
         ring.setAttribute("stroke", "none");
         ringGroup.appendChild(ring);
         g.appendChild(ringGroup);
@@ -1549,13 +1550,13 @@ class LocatorHandler {
 
         // Transparent hit area
         let hitArea = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        hitArea.setAttribute("r", ((r + ringStrokeW) * 1.5).toString());
+        hitArea.setAttribute("r", ((ringR + ringStrokeW) * 1.5).toString());
         hitArea.setAttribute("fill", "transparent");
         hitArea.setAttribute("stroke", "none");
         g.appendChild(hitArea);
 
         // Press animation — scale only the inner dot
-        const dragDotR = dotR * 2.2;
+        const dragDotR = dotR * 2.9;
         const pressStart = () => {
             dot.setAttribute("r", dragDotR.toString());
         };
