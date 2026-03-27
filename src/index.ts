@@ -62,30 +62,30 @@ export {
     xaxis, yaxis, xgrid, ygrid,
     plot, plotv, plotf, under_curvef,
     axes_options,
-} from './shapes/shapes_graph.js'
-export type { XYAxesDecomposed } from './shapes/shapes_graph.js'
+} from './shapes_basic/shapes_graph.js'
+export type { XYAxesDecomposed } from './shapes_basic/shapes_graph.js'
 
 export { TAG } from './tag_names.js'
 
-export * as graph from './shapes/shapes_graph.js'
-export * as geometry from './shapes/shapes_geometry.js'
-export * as annotation from './shapes/shapes_annotation.js'
-export * as mechanics from './shapes/shapes_mechanics.js'
-export * as bar from './shapes/shapes_bar.js'
-export * as numberline from './shapes/shapes_numberline.js'
-export * as table from './shapes/shapes_table.js'
-export * as boxplot from './shapes/shapes_boxplot.js'
+export * as graph from './shapes_basic/shapes_graph.js'
+export * as geometry from './shapes_basic/shapes_geometry.js'
+export * as annotation from './shapes_basic/shapes_annotation.js'
+export * as mechanics from './shapes_basic/shapes_mechanics.js'
+export * as bar from './shapes_basic/shapes_bar.js'
+export * as numberline from './shapes_basic/shapes_numberline.js'
+export * as table from './shapes_basic/shapes_table.js'
+export * as boxplot from './shapes_basic/shapes_boxplot.js'
 export * as geo_construct from './geo_construct/geo_construct.js'
-export * as tree from './shapes/shapes_tree.js'
-export * as curves from './shapes/shapes_curves.js'
-export * as shapes3d from './shapes/3d-like-shapes.js'
+export * as tree from './shapes_basic/shapes_tree.js'
+export * as curves from './shapes_basic/shapes_curves.js'
+export * as shapes3d from './shapes_basic/3d-like-shapes.js'
 export * as pseudo3d from './3d.js'
-export { feedback_marker, point_highlight } from './shapes/util_shapes.js'
-export type { FeedbackMarkerOptions } from './shapes/util_shapes.js'
+export { feedback_marker, point_highlight } from './shapes_basic/shapes_marker.js'
+export type { FeedbackMarkerOptions } from './shapes_basic/shapes_marker.js'
 
 // Mics
 export * as encoding from './encoding.js'
 
 // Widgets
-export { mcq_interactive, mcq_setup } from './shapes/shapes_mcq.js'
-export type { McqChoice, McqHandle, McqSlideState, McqSetupOpts } from './shapes/shapes_mcq.js'
+export { mcq_interactive, mcq_setup } from './shapes_basic/shapes_mcq.js'
+export type { McqChoice, McqHandle, McqSlideState, McqSetupOpts } from './shapes_basic/shapes_mcq.js'

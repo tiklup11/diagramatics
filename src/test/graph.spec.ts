@@ -1,11 +1,8 @@
 import {
-    get_tick_numbers,
-    xticks,
-    yticks,
-    xyaxes_decomposed,
+    get_tick_numbers, xyaxes_decomposed,
     xycorneraxes,
-    xycorneraxes_xbreak,
-} from '../shapes/shapes_graph.js'
+    xycorneraxes_xbreak
+} from '../shapes_basic/shapes_graph.js';
 import { TAG } from '../tag_names.js';
 import { expect } from 'chai';
 import 'mocha';
@@ -19,7 +16,7 @@ describe('Graph', () => {
             expect(get_tick_numbers(0, 100)).to.eql([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]);
             expect(get_tick_numbers(0, 5)).to.eql([0, 1, 2, 3, 4, 5]);
             // expect(get_tick_numbers(0, 15)).to.eql([ 0, 1.5, 3, 4.5, 6, 7.5, 9, 10.5, 12, 13.5, 15 ]);
-            expect(get_tick_numbers(-6, 5)).to.eql([ -6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5 ]);
+            expect(get_tick_numbers(-6, 5)).to.eql([-6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5]);
         });
 
         it('can hide tick labels on x or y independently', () => {

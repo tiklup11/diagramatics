@@ -1,8 +1,8 @@
 import { Diagram, diagram_combine, empty } from './diagram.js';
 import { V2 } from './vector.js';
-import { size } from './shapes/shapes_geometry.js';
+import { size } from './shapes_basic/shapes_geometry.js';
 
-export type VerticalAlignment   = 'top'  | 'center' | 'bottom';
+export type VerticalAlignment = 'top' | 'center' | 'bottom';
 export type HorizontalAlignment = 'left' | 'center' | 'right';
 
 /**
@@ -12,12 +12,12 @@ export type HorizontalAlignment = 'left' | 'center' | 'right';
  * alignment can be 'top', 'center', or 'bottom'
  * @returns array of aligned diagrams
  */
-export function align_vertical(diagrams : Diagram[], alignment : VerticalAlignment = 'center') : Diagram {
+export function align_vertical(diagrams: Diagram[], alignment: VerticalAlignment = 'center'): Diagram {
     // align all the diagrams following the first diagram
     if (diagrams.length == 0) { return empty(); }
     let newdiagrams = [...diagrams]
 
-    if (alignment == 'top'){
+    if (alignment == 'top') {
         let top_y = newdiagrams[0].get_anchor("top-left").y;
         // return diagrams.map(d => d.translate(V2(0, top_y - d.get_anchor("top-left").y)));
         for (let i = 0; i < newdiagrams.length; i++) {
@@ -25,7 +25,7 @@ export function align_vertical(diagrams : Diagram[], alignment : VerticalAlignme
         }
         return diagram_combine(...newdiagrams);
     }
-    else if (alignment == 'center'){
+    else if (alignment == 'center') {
         let center_y = newdiagrams[0].get_anchor("center-left").y;
         // return diagrams.map(d => d.translate(V2(0, center_y - d.get_anchor("center-left").y)));
         for (let i = 0; i < newdiagrams.length; i++) {
@@ -33,7 +33,7 @@ export function align_vertical(diagrams : Diagram[], alignment : VerticalAlignme
         }
         return diagram_combine(...newdiagrams);
     }
-    else if (alignment == 'bottom'){
+    else if (alignment == 'bottom') {
         let bottom_y = newdiagrams[0].get_anchor("bottom-left").y;
         // return diagrams.map(d => d.translate(V2(0, bottom_y - d.get_anchor("bottom-left").y)));
         for (let i = 0; i < newdiagrams.length; i++) {
@@ -53,13 +53,13 @@ export function align_vertical(diagrams : Diagram[], alignment : VerticalAlignme
  * alignment can be 'left', 'center', or 'right'
  * @returns array of aligned diagrams
  */
-export function align_horizontal(diagrams : Diagram[], alignment : HorizontalAlignment = 'center') : Diagram {
+export function align_horizontal(diagrams: Diagram[], alignment: HorizontalAlignment = 'center'): Diagram {
 
     // align all the diagrams following the first diagram
     if (diagrams.length == 0) { return empty(); }
     let newdiagrams = [...diagrams]
 
-    if (alignment == 'left'){
+    if (alignment == 'left') {
         let left_x = newdiagrams[0].get_anchor("top-left").x;
         // return newdiagrams.map(d => d.translate(V2(left_x - d.get_anchor("top-left").x, 0)));
         for (let i = 0; i < newdiagrams.length; i++) {
@@ -67,7 +67,7 @@ export function align_horizontal(diagrams : Diagram[], alignment : HorizontalAli
         }
         return diagram_combine(...newdiagrams);
     }
-    else if (alignment == 'center'){
+    else if (alignment == 'center') {
         let center_x = newdiagrams[0].get_anchor("top-center").x;
         // return newdiagrams.map(d => d.translate(V2(center_x - d.get_anchor("top-center").x, 0)));
         for (let i = 0; i < newdiagrams.length; i++) {
@@ -75,7 +75,7 @@ export function align_horizontal(diagrams : Diagram[], alignment : HorizontalAli
         }
         return diagram_combine(...newdiagrams);
     }
-    else if (alignment == 'right'){
+    else if (alignment == 'right') {
         let right_x = newdiagrams[0].get_anchor("top-right").x;
         // return newdiagrams.map(d => d.translate(V2(right_x - d.get_anchor("top-right").x, 0)));
         for (let i = 0; i < newdiagrams.length; i++) {
@@ -94,16 +94,16 @@ export function align_horizontal(diagrams : Diagram[], alignment : HorizontalAli
  * @param space space between the diagrams (default = 0)
  * @returns array of distributed diagrams
  */
-export function distribute_horizontal(diagrams : Diagram[], space : number = 0) : Diagram {
+export function distribute_horizontal(diagrams: Diagram[], space: number = 0): Diagram {
     if (diagrams.length == 0) { return empty(); }
     let newdiagrams = [...diagrams]
 
-    let distributed_diagrams : Diagram[] = [newdiagrams[0]];
+    let distributed_diagrams: Diagram[] = [newdiagrams[0]];
     for (let i = 1; i < newdiagrams.length; i++) {
-        let prev_diagram = distributed_diagrams[i-1];
+        let prev_diagram = distributed_diagrams[i - 1];
         let this_diagram = newdiagrams[i];
         let prev_right = prev_diagram.get_anchor("top-right").x;
-        let this_left  = this_diagram.get_anchor("top-left").x;
+        let this_left = this_diagram.get_anchor("top-left").x;
         let dx = prev_right - this_left + space;
         distributed_diagrams.push(this_diagram.translate(V2(dx, 0)));
     }
@@ -116,16 +116,16 @@ export function distribute_horizontal(diagrams : Diagram[], space : number = 0) 
  * @param space space between the diagrams (default = 0)
  * @returns array of distributed diagrams
  */
-export function distribute_vertical(diagrams : Diagram[], space : number = 0) : Diagram {
+export function distribute_vertical(diagrams: Diagram[], space: number = 0): Diagram {
     if (diagrams.length == 0) { return empty(); }
     let newdiagrams = [...diagrams]
 
-    let distributed_diagrams : Diagram[] = [newdiagrams[0]];
+    let distributed_diagrams: Diagram[] = [newdiagrams[0]];
     for (let i = 1; i < newdiagrams.length; i++) {
-        let prev_diagram = distributed_diagrams[i-1];
+        let prev_diagram = distributed_diagrams[i - 1];
         let this_diagram = newdiagrams[i];
         let prev_bottom = prev_diagram.get_anchor("bottom-left").y;
-        let this_top    = this_diagram.get_anchor("top-left").y;
+        let this_top = this_diagram.get_anchor("top-left").y;
         let dy = prev_bottom - this_top - space;
         distributed_diagrams.push(this_diagram.translate(V2(0, dy)));
     }
@@ -140,8 +140,8 @@ export function distribute_vertical(diagrams : Diagram[], space : number = 0) : 
  * alignment can be 'top', 'center', or 'bottom'
  * @returns array of distributed and aligned diagrams
  */
-export function distribute_horizontal_and_align(diagrams : Diagram[], horizontal_space : number = 0,
-    alignment : VerticalAlignment = 'center') : Diagram {
+export function distribute_horizontal_and_align(diagrams: Diagram[], horizontal_space: number = 0,
+    alignment: VerticalAlignment = 'center'): Diagram {
     return distribute_horizontal(align_vertical(diagrams, alignment).children, horizontal_space);
 }
 
@@ -153,8 +153,8 @@ export function distribute_horizontal_and_align(diagrams : Diagram[], horizontal
  * alignment can be 'left', 'center', or 'right'
  * @returns array of distributed and aligned diagrams
  */
-export function distribute_vertical_and_align(diagrams : Diagram[], vertical_space : number = 0,
-    alignment : HorizontalAlignment = 'center') : Diagram {
+export function distribute_vertical_and_align(diagrams: Diagram[], vertical_space: number = 0,
+    alignment: HorizontalAlignment = 'center'): Diagram {
     return distribute_vertical(align_horizontal(diagrams, alignment).children, vertical_space);
 }
 
@@ -167,16 +167,16 @@ export function distribute_vertical_and_align(diagrams : Diagram[], vertical_spa
  * NODE: the behaviour is updated in v1.3.0 
  * (now the returned diagram's children is the distributed diagrams instead of list of list of diagrams)
  */
-export function distribute_grid_row(diagrams : Diagram[], column_count : number, 
-    vectical_space : number = 0, horizontal_space : number = 0,
-) : Diagram {
+export function distribute_grid_row(diagrams: Diagram[], column_count: number,
+    vectical_space: number = 0, horizontal_space: number = 0,
+): Diagram {
     if (diagrams.length == 0) { return empty(); }
     let newdiagrams = [...diagrams]
 
     let row_count = Math.ceil(newdiagrams.length / column_count);
-    let rows : Diagram[][] = [];
+    let rows: Diagram[][] = [];
     for (let i = 0; i < row_count; i++) {
-        rows.push(newdiagrams.slice(i * column_count, (i+1) * column_count));
+        rows.push(newdiagrams.slice(i * column_count, (i + 1) * column_count));
     }
     let distributed_rows = rows.map(row => distribute_horizontal(row, horizontal_space));
     let distributed_diagrams = distribute_vertical(distributed_rows, vectical_space);
@@ -203,21 +203,21 @@ export function distribute_grid_row(diagrams : Diagram[], column_count : number,
  * alignment can be 'left', 'center', or 'right'
  * @param tolerancePercentage tolerance percentage for the width of the diagrams (default = 1)
  */
-export function distribute_variable_row(diagrams: Diagram[], container_width : number, 
-    vertical_space : number = 0, horizontal_space : number = 0, 
-    vertical_alignment : VerticalAlignment = 'center', 
-    horizontal_alignment : HorizontalAlignment = 'left',
-    tolerancePercentage : number = 1
-) : Diagram {
+export function distribute_variable_row(diagrams: Diagram[], container_width: number,
+    vertical_space: number = 0, horizontal_space: number = 0,
+    vertical_alignment: VerticalAlignment = 'center',
+    horizontal_alignment: HorizontalAlignment = 'left',
+    tolerancePercentage: number = 1
+): Diagram {
     if (diagrams.length == 0) { return empty(); }
 
-    let rows : Diagram[] = [];
-    let current_row : Diagram[] = [];
+    let rows: Diagram[] = [];
+    let current_row: Diagram[] = [];
     let current_row_w = 0;
-    
-    const width_tolerance = container_width * tolerancePercentage/100;
 
-    function add_diagrams_to_rows(arr : Diagram[]) {
+    const width_tolerance = container_width * tolerancePercentage / 100;
+
+    function add_diagrams_to_rows(arr: Diagram[]) {
         let distributed_row_dg = distribute_horizontal_and_align(arr, horizontal_space, vertical_alignment);
         rows.push(distributed_row_dg);
         current_row = [];

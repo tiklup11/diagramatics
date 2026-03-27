@@ -1,5 +1,5 @@
-import { area } from '../shapes/shapes_geometry.js'
-import { circle, square } from '../index.js'
+import { area } from '../shapes_basic/shapes_geometry.js';
+import { circle, square } from '../index.js';
 import { expect } from 'chai';
 import 'mocha';
 
