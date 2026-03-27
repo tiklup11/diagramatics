@@ -88,10 +88,10 @@ export * as encoding from './encoding.js'
 
 // Widgets
 export { mcq_interactive, mcq_setup } from './daigrams_library/basic_mcq.js'
-export type { McqChoice, McqHandle, McqSlideState, McqContext, McqOpts } from './daigrams_library/basic_mcq.js'
+export type { McqChoice, McqHandle, McqSlideState, McqContext, McqOpts, CardGeometry } from './daigrams_library/basic_mcq.js'
 
 export { polar_grid_plot } from './daigrams_library/polar_grid_plot.js'
 export type { PolarGridOpts, PolarGridHandle, PolarGridContext } from './daigrams_library/polar_grid_plot.js'
 
-export { pattern_block, pattern_staircase, pattern_staircase_width, pattern_staircase_height, pattern_staircase_bounds } from './daigrams_library/patterns.js'
-export type { PatternBlockStyle, PatternStaircaseOpts } from './daigrams_library/patterns.js'
+export { pattern_block, pattern_cells, pattern_cells_bounds, pattern_staircase, pattern_staircase_width, pattern_staircase_height, pattern_staircase_bounds } from './daigrams_library/patterns.js'
+export type { PatternBlockStyle, PatternCellsOpts, PatternStaircaseOpts } from './daigrams_library/patterns.js'

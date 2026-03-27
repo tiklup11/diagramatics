@@ -4,6 +4,7 @@ import { V2 } from '../vector.js';
 import { Interactive } from '../html_interactivity.js';
 import * as mod from '../modifier.js';
 import { draw_to_svg_element } from '../draw_svg.js';
+import { distribute_vertical_and_align } from '../alignment.js';
 import checkBoldSvg from '@phosphor-icons/core/assets/bold/check-bold.svg';
 import xBoldSvg from '@phosphor-icons/core/assets/bold/x-bold.svg';
 
@@ -24,10 +25,42 @@ export interface McqContext {
     onAnswerableChange?: (value: boolean) => void;
 }
 
+export interface CardGeometry {
+    CARD_W: number;
+    CARD_H: number;
+    HALF_CW: number;
+    HALF_CH: number;
+    getPos: (i: number) => { cx: number; cy: number };
+}
+
 export interface McqOpts {
     choices: McqChoice[];
     /** Called during each draw to produce extra overlay diagrams (e.g. badge icons on web). */
-    buildOverlay?: (choices: McqChoice[], selectedId: string | null, slideState: McqSlideState) => Diagram[];
+    buildOverlay?: (choices: McqChoice[], selectedId: string | null, slideState: McqSlideState, geo: CardGeometry) => Diagram[];
+    /** Horizontal padding added to max content width to get card width. Default: 8 */
+    cardPaddingX?: number;
+    /** Vertical padding added to max content height to get card height. Default: 6 */
+    cardPaddingY?: number;
+    /** Gap between cards horizontally. Default: 6 */
+    gapX?: number;
+    /** Gap between cards vertically. Default: 6 */
+    gapY?: number;
+    /** Number of columns in the card grid. Default: 2 */
+    columnCount?: number;
+    /**
+     * Total pixel width the card grid should span.
+     * When set, card width = (totalWidth - (cols-1)*gapX) / cols.
+     * When omitted and questionDiagram is set, card width matches the question diagram width.
+     * Otherwise derived from the largest content bounding box + cardPaddingX.
+     */
+    totalWidth?: number;
+    /**
+     * When provided, mcq_setup owns the full canvas: the card grid is placed below this
+     * diagram using distribute_vertical_and_align. No wrappedDraw needed.
+     */
+    questionDiagram?: Diagram;
+    /** Gap between the question diagram bottom and the card grid top. Default: 4 */
+    questionGap?: number;
 }
 
 export interface McqHandle {
@@ -44,27 +77,80 @@ interface InteractiveLike {
     draw: () => void;
 }
 
-const CARD_W  = 62;
-const CARD_H  = 36;
-const GAP_X   = 6;
-const GAP_Y   = 6;
-const HALF_CW = CARD_W / 2;
-const HALF_CH = CARD_H / 2;
+function makeCardHelpers(choices: McqChoice[], opts: McqOpts) {
+    const {
+        cardPaddingX = 8,
+        cardPaddingY = 6,
+        gapX = 6,
+        gapY = 6,
+        columnCount = 2,
+        totalWidth,
+        questionDiagram,
+        questionGap = 4,
+    } = opts;
 
-const COL_X = [-(HALF_CW + GAP_X / 2), +(HALF_CW + GAP_X / 2)];
-const ROW_Y = [+(HALF_CH + GAP_Y / 2), -(HALF_CH + GAP_Y / 2)];
+    // Compute max content bounding box
+    let maxW = 0, maxH = 0;
+    for (const choice of choices) {
+        const [min, max] = choice.content.bounding_box();
+        const w = max.x - min.x;
+        const h = max.y - min.y;
+        if (w > maxW) maxW = w;
+        if (h > maxH) maxH = h;
+    }
 
-function cardPts(cx: number, cy: number) {
-    return [
-        V2(cx - HALF_CW, cy - HALF_CH),
-        V2(cx + HALF_CW, cy - HALF_CH),
-        V2(cx + HALF_CW, cy + HALF_CH),
-        V2(cx - HALF_CW, cy + HALF_CH),
-    ];
-}
+    // Card width: explicit totalWidth > question-derived width > content-derived width
+    let CARD_W: number;
+    if (totalWidth !== undefined) {
+        CARD_W = (totalWidth - (columnCount - 1) * gapX) / columnCount;
+    } else if (questionDiagram) {
+        const [qMin, qMax] = questionDiagram.bounding_box();
+        const qBasedW = (qMax.x - qMin.x - (columnCount - 1) * gapX) / columnCount;
+        CARD_W = Math.max(maxW + cardPaddingX, qBasedW);
+    } else {
+        CARD_W = maxW + cardPaddingX;
+    }
+    const CARD_H = maxH + cardPaddingY;
+    let HALF_CW = CARD_W / 2;
+    const HALF_CH = CARD_H / 2;
 
-function getPos(i: number): { cx: number; cy: number } {
-    return { cx: COL_X[i % 2], cy: ROW_Y[Math.floor(i / 2)] };
+    // Grid offset: when questionDiagram provided, getPos returns positions already
+    // offset so that distribute_vertical_and_align([questionDiagram, localCardsGrid])
+    // places cards at exactly these coordinates.
+    let gridOffsetX = 0;
+    let gridOffsetY = 0;
+    if (questionDiagram) {
+        const [qMin, qMax] = questionDiagram.bounding_box();
+        const totalRows = Math.ceil(choices.length / columnCount);
+        const gridH = totalRows * CARD_H + (totalRows - 1) * gapY;
+        gridOffsetX = (qMin.x + qMax.x) / 2;
+        gridOffsetY = (qMin.y - questionGap) - gridH / 2;
+    }
+
+    function cardPts(cx: number, cy: number) {
+        return [
+            V2(cx - HALF_CW, cy - HALF_CH),
+            V2(cx + HALF_CW, cy - HALF_CH),
+            V2(cx + HALF_CW, cy + HALF_CH),
+            V2(cx - HALF_CW, cy + HALF_CH),
+        ];
+    }
+
+    // Returns card center in final (offset) coordinate space — used for hit areas and overlays
+    function getPos(i: number): { cx: number; cy: number } {
+        const col = i % columnCount;
+        const row = Math.floor(i / columnCount);
+        const totalRows = Math.ceil(choices.length / columnCount);
+        const gridW = columnCount * CARD_W + (columnCount - 1) * gapX;
+        const gridH = totalRows * CARD_H + (totalRows - 1) * gapY;
+        return {
+            cx: gridOffsetX + (-gridW / 2 + HALF_CW + col * (CARD_W + gapX)),
+            cy: gridOffsetY + ( gridH / 2 - HALF_CH - row * (CARD_H + gapY)),
+        };
+    }
+
+    return { CARD_W, CARD_H, HALF_CW, HALF_CH, cardPts, getPos,
+             questionDiagram, questionGap, gridOffsetX, gridOffsetY };
 }
 
 function phosphorIcon(name: 'check' | 'x', size: number): Diagram {
@@ -76,8 +162,9 @@ function phosphorIcon(name: 'check' | 'x', size: number): Diagram {
     return foreign_object(svg, size, size, 1);
 }
 
-function buildBadgeOverlay(choices: McqChoice[], selectedId: string | null, slideState: McqSlideState): Diagram[] {
+function buildBadgeOverlay(choices: McqChoice[], selectedId: string | null, slideState: McqSlideState, geo: CardGeometry): Diagram[] {
     if (slideState === 'idle') return [];
+    const { getPos, HALF_CW, HALF_CH } = geo;
     const overlays: Diagram[] = [];
     for (let i = 0; i < choices.length; i++) {
         const choice = choices[i];
@@ -118,6 +205,9 @@ export function mcq_setup(
 ): McqHandle {
     const { draw, int, onAnswerableChange } = ctx;
     const { choices, buildOverlay } = opts;
+    const geo = makeCardHelpers(choices, opts);
+    const { HALF_CW, HALF_CH, cardPts, getPos,
+            questionDiagram, questionGap, gridOffsetX, gridOffsetY } = geo;
 
     let selectedId: string | null = null;
     let slideState: McqSlideState = 'idle';
@@ -134,11 +224,15 @@ export function mcq_setup(
     }
 
     int.draw_function = (_inp: Record<string, unknown>) => {
-        const diagrams: Diagram[] = [];
+        // Build each card at its LOCAL position (without gridOffset).
+        // distribute_vertical_and_align will apply the offset when stacking with questionDiagram.
+        const cardDiagrams: Diagram[] = [];
 
         for (let i = 0; i < choices.length; i++) {
             const choice = choices[i];
             const pos = getPos(i);
+            const localCx = pos.cx - gridOffsetX;
+            const localCy = pos.cy - gridOffsetY;
             const isSelected = selectedId === choice.id;
 
             let variant: 'idle' | 'selected' | 'correct' | 'wrong';
@@ -161,20 +255,34 @@ export function mcq_setup(
                 fill = '#FFFFFF'; stroke = '#DCDCDC'; tColor = '#555555';
             }
 
-            const bg = polygon(cardPts(pos.cx, pos.cy))
+            const bg = polygon(cardPts(localCx, localCy))
                 .apply(mod.round_corner(10))
                 .fill(fill).stroke(stroke).strokewidth(2);
             const lbl = choice.content
-                .position(V2(pos.cx, pos.cy))
+                .position(V2(localCx, localCy))
                 .textfill(tColor);
-            diagrams.push(bg, lbl);
+            cardDiagrams.push(diagram_combine(bg, lbl));
         }
+
+        const localCardsGrid = cardDiagrams.length === 1
+            ? cardDiagrams[0]
+            : diagram_combine(...cardDiagrams);
+
+        // Stack question + cards using distribute_vertical_and_align, which centers
+        // the card grid on the question and places it questionGap below.
+        // When no questionDiagram, cards stay at local origin (backward compatible).
+        const cardsSection = questionDiagram
+            ? distribute_vertical_and_align([questionDiagram, localCardsGrid], questionGap)
+            : localCardsGrid;
 
         if (buildOverlay) {
-            diagrams.push(...buildOverlay(choices, selectedId, slideState));
+            // Overlays use getPos() which returns offset-space positions — correct for
+            // the final rendered layout regardless of whether questionDiagram is used.
+            const overlays = buildOverlay(choices, selectedId, slideState, geo);
+            draw(diagram_combine(cardsSection, ...overlays));
+        } else {
+            draw(cardsSection);
         }
-
-        draw(diagrams.length === 1 ? diagrams[0] : diagram_combine(...diagrams));
     };
 
     for (let i = 0; i < choices.length; i++) {

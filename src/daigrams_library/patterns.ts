@@ -89,6 +89,104 @@ export function pattern_staircase_bounds(
     return { w: (n - 1) * step + blockSize, h: maxY };
 }
 
+// ─── pattern_cells ────────────────────────────────────────────────────────────
+
+export interface PatternCellsOpts extends PatternBlockStyle {
+    /** Block size (square). Default: 2.5 */
+    blockSize?: number;
+    /** Step between adjacent block centers (block + gap). Default: 3.0 */
+    step?: number;
+    /**
+     * Bottom-left anchor of the figure's bounding box.
+     * Omit both to auto-center the figure at (0, 0).
+     */
+    anchorX?: number;
+    anchorY?: number;
+}
+
+/**
+ * Draw a pattern figure from an array of `[row, col]` cell positions.
+ *
+ * Row 0 is the bottom; positive rows go up.
+ * Col 0 is the leftmost; positive cols go right.
+ *
+ * Omit `anchorX`/`anchorY` to auto-center at (0, 0).
+ *
+ * ```ts
+ * // Triangle (figure 3: 3 rows, base-width 3)
+ * pattern_cells([[0,0],[0,1],[0,2],[1,0],[1,1],[2,0]])
+ *
+ * // L-shape
+ * pattern_cells([[0,0],[1,0],[2,0],[2,1],[2,2]])
+ *
+ * // Plus/cross
+ * pattern_cells([[0,1],[1,0],[1,1],[1,2],[2,1]])
+ * ```
+ */
+export function pattern_cells(
+    cells: [number, number][],
+    opts: PatternCellsOpts = {},
+): Diagram {
+    const {
+        blockSize   = 2.5,
+        step        = 3.0,
+        color       = '#7C3AED',
+        strokeColor = '#5B21B6',
+        strokeWidth = 0.25,
+    } = opts;
+
+    if (cells.length === 0) return polygon([V2(0, 0)]).fill('none').stroke('none');
+
+    // Compute bounding box from cell extents
+    let minRow = cells[0][0], maxRow = cells[0][0];
+    let minCol = cells[0][1], maxCol = cells[0][1];
+    for (const [r, c] of cells) {
+        if (r < minRow) minRow = r;
+        if (r > maxRow) maxRow = r;
+        if (c < minCol) minCol = c;
+        if (c > maxCol) maxCol = c;
+    }
+    const figW = (maxCol - minCol) * step + blockSize;
+    const figH = (maxRow - minRow) * step + blockSize;
+
+    const ax = opts.anchorX ?? -figW / 2 - minCol * step;
+    const ay = opts.anchorY ?? -figH / 2 - minRow * step;
+
+    return diagram_combine(
+        ...cells.map(([row, col]) =>
+            pattern_block(
+                ax + col * step + blockSize / 2,
+                ay + row * step + blockSize / 2,
+                blockSize,
+                { color, strokeColor, strokeWidth },
+            ),
+        ),
+    );
+}
+
+/**
+ * Compute the bounding box of a cell array (in diagram units).
+ */
+export function pattern_cells_bounds(
+    cells: [number, number][],
+    blockSize: number,
+    step: number,
+): { w: number; h: number } {
+    if (cells.length === 0) return { w: 0, h: 0 };
+    let minRow = cells[0][0], maxRow = cells[0][0];
+    let minCol = cells[0][1], maxCol = cells[0][1];
+    for (const [r, c] of cells) {
+        if (r < minRow) minRow = r;
+        if (r > maxRow) maxRow = r;
+        if (c < minCol) minCol = c;
+        if (c > maxCol) maxCol = c;
+    }
+    return {
+        w: (maxCol - minCol) * step + blockSize,
+        h: (maxRow - minRow) * step + blockSize,
+    };
+}
+
 // ─── pattern_staircase ────────────────────────────────────────────────────────
 
 /**
