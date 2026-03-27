@@ -7,24 +7,34 @@ import { draw_to_svg_element } from '../draw_svg.js';
 import checkBoldSvg from '@phosphor-icons/core/assets/bold/check-bold.svg';
 import xBoldSvg from '@phosphor-icons/core/assets/bold/x-bold.svg';
 
+// ─── Types ──────────────────────────────────────────────────────────────────
+
 export interface McqChoice {
     id: string;
     content: Diagram;
     correct: boolean;
 }
 
+export type McqSlideState = 'idle' | 'correct' | 'incorrect';
+
+export interface McqContext {
+    draw: (...diagrams: Diagram[]) => void;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    int: any;
+    onAnswerableChange?: (value: boolean) => void;
+}
+
+export interface McqOpts {
+    choices: McqChoice[];
+    /** Called during each draw to produce extra overlay diagrams (e.g. badge icons on web). */
+    buildOverlay?: (choices: McqChoice[], selectedId: string | null, slideState: McqSlideState) => Diagram[];
+}
+
 export interface McqHandle {
     validate:    () => boolean | null;
     reset:       () => void;
     setDisabled: (disabled: boolean) => void;
-}
-
-export type McqSlideState = 'idle' | 'correct' | 'incorrect';
-
-export interface McqSetupOpts {
-    onFirstInteraction?: () => void;
-    /** Called during each draw to produce extra overlay diagrams (e.g. badge icons on web). */
-    buildOverlay?: (choices: McqChoice[], selectedId: string | null, slideState: McqSlideState) => Diagram[];
+    setPresentationState: (state: string) => void;
 }
 
 interface InteractiveLike {
@@ -103,15 +113,25 @@ function buildBadgeOverlay(choices: McqChoice[], selectedId: string | null, slid
  * (web `Interactive` or native `RNInteractive`).
  */
 export function mcq_setup(
-    int: InteractiveLike,
-    draw: (d: Diagram) => void,
-    choices: McqChoice[],
-    opts: McqSetupOpts = {},
+    ctx: McqContext,
+    opts: McqOpts,
 ): McqHandle {
+    const { draw, int, onAnswerableChange } = ctx;
+    const { choices, buildOverlay } = opts;
+
     let selectedId: string | null = null;
     let slideState: McqSlideState = 'idle';
     let disabled = false;
     let hasInteracted = false;
+    let presentationState = 'interactive';
+
+    function setAnswerable(value: boolean) {
+        if (typeof onAnswerableChange === 'function') onAnswerableChange(value);
+    }
+
+    function syncAnswerable() {
+        setAnswerable(presentationState === 'interactive' && hasInteracted);
+    }
 
     int.draw_function = (_inp: Record<string, unknown>) => {
         const diagrams: Diagram[] = [];
@@ -150,8 +170,8 @@ export function mcq_setup(
             diagrams.push(bg, lbl);
         }
 
-        if (opts.buildOverlay) {
-            diagrams.push(...opts.buildOverlay(choices, selectedId, slideState));
+        if (buildOverlay) {
+            diagrams.push(...buildOverlay(choices, selectedId, slideState));
         }
 
         draw(diagrams.length === 1 ? diagrams[0] : diagram_combine(...diagrams));
@@ -167,33 +187,53 @@ export function mcq_setup(
         int.button_click('c' + idx, hit, hit, () => {
             if (disabled) return;
             selectedId = choices[idx].id;
-            if (!hasInteracted && opts.onFirstInteraction) {
+            if (!hasInteracted) {
                 hasInteracted = true;
-                opts.onFirstInteraction();
+                syncAnswerable();
             }
             int.draw();
         });
     }
 
+    syncAnswerable();
     int.draw();
 
     return {
-        validate: () => {
+        validate() {
             if (selectedId === null) return null;
-            const isCorrect = choices.find(c => c.id === selectedId)?.correct ?? false;
-            slideState = isCorrect ? 'correct' : 'incorrect';
-            disabled = true;
-            int.draw();
-            return isCorrect;
+            return choices.find(c => c.id === selectedId)?.correct ?? false;
         },
-        reset: () => {
+
+        reset() {
             selectedId = null;
             slideState = 'idle';
             disabled = false;
             hasInteracted = false;
+            presentationState = 'interactive';
+            syncAnswerable();
             int.draw();
         },
-        setDisabled: (d: boolean) => { disabled = d; },
+
+        setDisabled(d: boolean) {
+            disabled = d;
+            int.draw();
+        },
+
+        setPresentationState(state: string) {
+            presentationState = state;
+            if (state === 'answered-correct') {
+                slideState = 'correct';
+                disabled = true;
+            } else if (state === 'answered-incorrect') {
+                slideState = 'incorrect';
+                disabled = true;
+            } else {
+                slideState = 'idle';
+                disabled = false;
+            }
+            syncAnswerable();
+            int.draw();
+        },
     };
 }
 
@@ -207,5 +247,5 @@ export function mcq_interactive(
 ): McqHandle {
     const int = new Interactive(ctrl, svg);
     const draw = (d: Diagram) => draw_to_svg_element(svg, d);
-    return mcq_setup(int, draw, choices, { buildOverlay: buildBadgeOverlay });
+    return mcq_setup({ int, draw }, { choices, buildOverlay: buildBadgeOverlay });
 }
