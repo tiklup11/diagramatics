@@ -61,11 +61,13 @@ export interface McqOpts {
     questionDiagram?: Diagram;
     /** Gap between the question diagram bottom and the card grid top. Default: 4 */
     questionGap?: number;
+    /** Corner radius of each card. Default: 4 */
+    borderRadius?: number;
 }
 
 export interface McqHandle {
-    validate:    () => boolean | null;
-    reset:       () => void;
+    validate: () => boolean | null;
+    reset: () => void;
     setDisabled: (disabled: boolean) => void;
     setPresentationState: (state: string) => void;
 }
@@ -87,6 +89,7 @@ function makeCardHelpers(choices: McqChoice[], opts: McqOpts) {
         totalWidth,
         questionDiagram,
         questionGap = 4,
+        borderRadius = 6,
     } = opts;
 
     // Compute max content bounding box
@@ -145,12 +148,14 @@ function makeCardHelpers(choices: McqChoice[], opts: McqOpts) {
         const gridH = totalRows * CARD_H + (totalRows - 1) * gapY;
         return {
             cx: gridOffsetX + (-gridW / 2 + HALF_CW + col * (CARD_W + gapX)),
-            cy: gridOffsetY + ( gridH / 2 - HALF_CH - row * (CARD_H + gapY)),
+            cy: gridOffsetY + (gridH / 2 - HALF_CH - row * (CARD_H + gapY)),
         };
     }
 
-    return { CARD_W, CARD_H, HALF_CW, HALF_CH, cardPts, getPos,
-             questionDiagram, questionGap, gridOffsetX, gridOffsetY };
+    return {
+        CARD_W, CARD_H, HALF_CW, HALF_CH, cardPts, getPos,
+        questionDiagram, questionGap, gridOffsetX, gridOffsetY, borderRadius
+    };
 }
 
 function phosphorIcon(name: 'check' | 'x', size: number): Diagram {
@@ -171,8 +176,8 @@ function buildBadgeOverlay(choices: McqChoice[], selectedId: string | null, slid
         const pos = getPos(i);
         const isSelected = selectedId === choice.id;
         let variant: 'correct' | 'wrong' | null = null;
-        if (choice.correct)       variant = 'correct';
-        else if (isSelected)      variant = 'wrong';
+        if (choice.correct) variant = 'correct';
+        else if (isSelected) variant = 'wrong';
         if (!variant) continue;
 
         // top-right of card bounding box
@@ -185,8 +190,8 @@ function buildBadgeOverlay(choices: McqChoice[], selectedId: string | null, slid
             V2(trx + bh, try_ + bh),
             V2(trx - bh, try_ + bh),
         ]).apply(mod.round_corner(0.9))
-          .fill(variant === 'correct' ? '#7A7A7A' : '#E05252')
-          .stroke('none');
+            .fill(variant === 'correct' ? '#7A7A7A' : '#E05252')
+            .stroke('none');
         const iconSize = bh * 1.2;
         const badgeIcon = phosphorIcon(variant === 'correct' ? 'check' : 'x', iconSize)
             .position(V2(trx, try_));
@@ -206,8 +211,8 @@ export function mcq_setup(
     const { draw, int, onAnswerableChange } = ctx;
     const { choices, buildOverlay } = opts;
     const geo = makeCardHelpers(choices, opts);
-    const { HALF_CW, HALF_CH, cardPts, getPos,
-            questionDiagram, questionGap, gridOffsetX, gridOffsetY } = geo;
+    const { cardPts, getPos,
+        questionDiagram, questionGap, gridOffsetX, gridOffsetY, borderRadius } = geo;
 
     let selectedId: string | null = null;
     let slideState: McqSlideState = 'idle';
@@ -239,9 +244,9 @@ export function mcq_setup(
             if (slideState === 'idle') {
                 variant = isSelected ? 'selected' : 'idle';
             } else {
-                if (choice.correct)  variant = 'correct';
+                if (choice.correct) variant = 'correct';
                 else if (isSelected) variant = 'wrong';
-                else                 variant = 'idle';
+                else variant = 'idle';
             }
 
             let fill: string, stroke: string, tColor: string;
@@ -256,7 +261,7 @@ export function mcq_setup(
             }
 
             const bg = polygon(cardPts(localCx, localCy))
-                .apply(mod.round_corner(10))
+                .apply(mod.round_corner(borderRadius))
                 .fill(fill).stroke(stroke).strokewidth(2);
             const lbl = choice.content
                 .position(V2(localCx, localCy))
@@ -289,7 +294,7 @@ export function mcq_setup(
         const idx = i;
         const pos = getPos(idx);
         const hit = polygon(cardPts(pos.cx, pos.cy))
-            .apply(mod.round_corner(10))
+            .apply(mod.round_corner(borderRadius))
             .fill('transparent')
             .stroke('none');
         int.button_click('c' + idx, hit, hit, () => {
